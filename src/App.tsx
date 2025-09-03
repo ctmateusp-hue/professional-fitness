@@ -1,5 +1,95 @@
+import { useState } from 'react'
+import { useKV } from '@github/spark/hooks'
+import { Header } from './components/Header'
+import { Hero } from './components/Hero'
+import { ModalityCards } from './components/ModalityCards'
+import { Gallery } from './components/Gallery'
+import { Contact } from './components/Contact'
+import { AdminPanel } from './components/AdminPanel'
+import { Toaster } from '@/components/ui/sonner'
+
+export type Modality = {
+  id: string
+  title: string
+  description: string
+  image?: string
+}
+
+export type MediaItem = {
+  id: string
+  modalityId: string
+  type: 'image' | 'video'
+  url: string
+  title: string
+  thumbnail?: string
+}
+
+const defaultModalities: Modality[] = [
+  {
+    id: 'functional',
+    title: 'FUNCIONAL/CROSS',
+    description: 'Nossos treinos são elaborados com uma metodologia própria. Voltado para as pessoas da nossa cidade. São exercícios que usam bastante o peso corporal associados com aparelhos de musculação.'
+  },
+  {
+    id: 'musculacao',
+    title: 'MUSCULAÇÃO',
+    description: 'Treinos elaborados com exercícios de resultado, ou seja, focando no que o corpo mais precisa, tanto para estética, fortalecimento, ganho de massa….etc.'
+  },
+  {
+    id: 'zumba',
+    title: 'ZUMBA',
+    description: 'Aula de dança com as melhores e mais animadas músicas! Coreografias adaptadas para você aproveitar o máximo a aula!'
+  }
+]
+
 function App() {
-    return <div></div>
+  const [currentView, setCurrentView] = useState<'home' | 'admin'>('home')
+  const [isAdmin, setIsAdmin] = useState(false)
+  const [modalities] = useKV<Modality[]>('gym-modalities', defaultModalities)
+  const [media] = useKV<MediaItem[]>('gym-media', [])
+  const [selectedModalityId, setSelectedModalityId] = useState<string | null>(null)
+
+  const selectedModality = modalities.find(m => m.id === selectedModalityId)
+
+  if (currentView === 'admin') {
+    return (
+      <div className="min-h-screen bg-background">
+        <AdminPanel 
+          onBack={() => setCurrentView('home')}
+          modalities={modalities}
+        />
+        <Toaster />
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      <Header 
+        onAdminClick={() => setCurrentView('admin')}
+        isAdmin={isAdmin}
+        onAdminLogin={() => setIsAdmin(true)}
+      />
+      
+      <main>
+        <Hero />
+        <ModalityCards 
+          modalities={modalities}
+          onModalityClick={setSelectedModalityId}
+        />
+        {selectedModality && (
+          <Gallery 
+            modality={selectedModality}
+            media={media.filter(m => m.modalityId === selectedModality.id)}
+            onClose={() => setSelectedModalityId(null)}
+          />
+        )}
+        <Contact />
+      </main>
+      
+      <Toaster />
+    </div>
+  )
 }
 
 export default App
