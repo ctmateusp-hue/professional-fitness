@@ -3,6 +3,7 @@ import { Shield } from '@phosphor-icons/react'
 import { Logo } from './Logo'
 import { motion, useScroll, useTransform } from 'framer-motion'
 import { useEffect, useState } from 'react'
+import { toast } from 'sonner'
 
 interface HeaderProps {
   onAdminClick: () => void
@@ -37,7 +38,7 @@ export function Header({ onAdminClick, isAdmin, onAdminLogin }: HeaderProps) {
           onAdminLogin()
           onAdminClick()
         } else {
-          alert('Senha incorreta!')
+          toast.error('Senha incorreta!')
         }
       }
     } else {
