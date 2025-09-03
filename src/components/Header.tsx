@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/button'
-import { Dumbbell, Shield } from '@phosphor-icons/react'
+import { Shield } from '@phosphor-icons/react'
+import { Logo } from './Logo'
 
 interface HeaderProps {
   onAdminClick: () => void
@@ -34,10 +35,8 @@ export function Header({ onAdminClick, isAdmin, onAdminLogin }: HeaderProps) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-              <Dumbbell size={24} className="text-primary-foreground" weight="bold" />
-            </div>
-            <h1 className="text-2xl font-black text-foreground tracking-tight">
+            <Logo size={50} showText={false} />
+            <h1 className="text-xl font-black text-foreground tracking-tight">
               CT MATEUS PAVANELLO
             </h1>
           </div>
