@@ -38,7 +38,7 @@ export function Header({ onAdminClick, isAdmin, onAdminLogin }: HeaderProps) {
               <Dumbbell size={24} className="text-primary-foreground" weight="bold" />
             </div>
             <h1 className="text-2xl font-black text-foreground tracking-tight">
-              FitZone Academy
+              CT MATEUS PAVANELLO
             </h1>
           </div>
           

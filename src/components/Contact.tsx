@@ -68,7 +68,7 @@ export function Contact() {
                 <div>
                   <h4 className="font-semibold mb-1">Email</h4>
                   <p className="text-primary-foreground/80">
-                    contato@fitzoneacademy.com
+                    contato@ctmateuspavanello.com
                   </p>
                 </div>
               </div>
