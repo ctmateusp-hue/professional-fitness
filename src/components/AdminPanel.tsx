@@ -1,14 +1,14 @@
 import { useState } from 'react'
-import { useKV } from '@github/spark/hooks'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { ArrowLeft, Upload, Trash, Image as ImageIcon, VideoCamera } from '@phosphor-icons/react'
-import { toast } from 'sonner'
+import { ArrowLeft, Upload, Trash2, Plus, Save } from '@phosphor-icons/react'
+import { useKV } from '@github/spark/hooks'
 import { Modality, MediaItem } from '../App'
+import { toast } from 'sonner'
 
 interface AdminPanelProps {
   onBack: () => void
@@ -18,40 +18,33 @@ interface AdminPanelProps {
 export function AdminPanel({ onBack, modalities }: AdminPanelProps) {
   const [media, setMedia] = useKV<MediaItem[]>('gym-media', [])
   const [selectedModality, setSelectedModality] = useState<string>('')
-  const [mediaTitle, setMediaTitle] = useState('')
   const [mediaType, setMediaType] = useState<'image' | 'video'>('image')
-  const [isUploading, setIsUploading] = useState(false)
+  const [mediaTitle, setMediaTitle] = useState('')
+  const [mediaUrl, setMediaUrl] = useState('')
 
-  const handleMediaUpload = async () => {
-    if (!selectedModality || !mediaTitle.trim()) {
-      toast.error('Por favor, preencha todos os campos')
+  const addMedia = () => {
+    if (!selectedModality || !mediaTitle || !mediaUrl) {
+      toast.error('Preencha todos os campos')
       return
     }
 
-    setIsUploading(true)
-    
-    try {
-      const newMedia: MediaItem = {
-        id: Date.now().toString(),
-        modalityId: selectedModality,
-        type: mediaType,
-        url: `placeholder-${mediaType}-${Date.now()}`,
-        title: mediaTitle.trim(),
-        thumbnail: mediaType === 'video' ? `thumbnail-${Date.now()}` : undefined
-      }
-
-      setMedia(currentMedia => [...currentMedia, newMedia])
-      setMediaTitle('')
-      toast.success('Mídia adicionada com sucesso!')
-    } catch (error) {
-      toast.error('Erro ao adicionar mídia')
-    } finally {
-      setIsUploading(false)
+    const newMedia: MediaItem = {
+      id: Date.now().toString(),
+      modalityId: selectedModality,
+      type: mediaType,
+      url: mediaUrl,
+      title: mediaTitle,
+      thumbnail: mediaType === 'video' ? mediaUrl + '?thumbnail' : undefined
     }
+
+    setMedia((current) => [...current, newMedia])
+    setMediaTitle('')
+    setMediaUrl('')
+    toast.success('Mídia adicionada com sucesso!')
   }
 
-  const handleDeleteMedia = (mediaId: string) => {
-    setMedia(currentMedia => currentMedia.filter(m => m.id !== mediaId))
+  const removeMedia = (mediaId: string) => {
+    setMedia((current) => current.filter(m => m.id !== mediaId))
     toast.success('Mídia removida com sucesso!')
   }
 
@@ -61,35 +54,30 @@ export function AdminPanel({ onBack, modalities }: AdminPanelProps) {
 
   return (
     <div className="min-h-screen bg-muted/30">
-      <div className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-4">
-              <Button variant="ghost" onClick={onBack}>
-                <ArrowLeft size={20} className="mr-2" />
-                Voltar
-              </Button>
-              <h1 className="text-2xl font-bold text-foreground">
-                Painel Administrativo
-              </h1>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              Total de mídias: {media.length}
-            </p>
-          </div>
-        </div>
-      </div>
-
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="mb-8">
+          <Button variant="outline" onClick={onBack} className="mb-4">
+            <ArrowLeft size={16} className="mr-2" />
+            Voltar ao Site
+          </Button>
+          <h1 className="text-4xl font-black text-foreground">
+            Painel Administrativo
+          </h1>
+          <p className="text-xl text-muted-foreground mt-2">
+            Gerencie fotos e vídeos das modalidades da academia
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Add Media Form */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Upload size={20} />
-                Adicionar Mídia
+                <Plus size={20} />
+                Adicionar Nova Mídia
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-6">
               <div>
                 <Label htmlFor="modality">Modalidade</Label>
                 <Select value={selectedModality} onValueChange={setSelectedModality}>
@@ -125,97 +113,113 @@ export function AdminPanel({ onBack, modalities }: AdminPanelProps) {
                   id="title"
                   value={mediaTitle}
                   onChange={(e) => setMediaTitle(e.target.value)}
-                  placeholder="Ex: Treino de peito e tríceps"
+                  placeholder="Ex: Treino de Musculação - Série A"
                 />
               </div>
 
-              <Button 
-                onClick={handleMediaUpload}
-                disabled={isUploading}
-                className="w-full"
-              >
-                {isUploading ? 'Adicionando...' : 'Adicionar Mídia'}
-              </Button>
+              <div>
+                <Label htmlFor="url">URL da {mediaType === 'image' ? 'Imagem' : 'Vídeo'}</Label>
+                <Input
+                  id="url"
+                  value={mediaUrl}
+                  onChange={(e) => setMediaUrl(e.target.value)}
+                  placeholder="Ex: https://exemplo.com/imagem.jpg"
+                />
+              </div>
 
-              <p className="text-xs text-muted-foreground">
-                Nota: Este é um demo. Em produção, você poderia fazer upload de arquivos reais.
-              </p>
+              <Button onClick={addMedia} className="w-full">
+                <Save size={16} className="mr-2" />
+                Adicionar Mídia
+              </Button>
             </CardContent>
           </Card>
 
-          <div className="lg:col-span-2">
-            <Tabs defaultValue={modalities[0]?.id} className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
-                {modalities.map((modality) => (
-                  <TabsTrigger key={modality.id} value={modality.id} className="text-sm">
-                    {modality.title}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-              
-              {modalities.map((modality) => (
-                <TabsContent key={modality.id} value={modality.id} className="mt-6">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center justify-between">
-                        <span>Mídia - {modality.title}</span>
-                        <span className="text-sm font-normal text-muted-foreground">
-                          {getModalityMedia(modality.id).length} itens
+          {/* Media Management */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Upload size={20} />
+                Mídia por Modalidade
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                {modalities.map((modality) => {
+                  const modalityMedia = getModalityMedia(modality.id)
+                  
+                  return (
+                    <div key={modality.id} className="border rounded-lg p-4">
+                      <h3 className="font-bold text-lg mb-3">
+                        {modality.title}
+                        <span className="ml-2 text-sm font-normal text-muted-foreground">
+                          ({modalityMedia.length} item{modalityMedia.length !== 1 ? 's' : ''})
                         </span>
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      {getModalityMedia(modality.id).length === 0 ? (
-                        <div className="text-center py-12 text-muted-foreground">
-                          <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
-                            <ImageIcon size={24} />
-                          </div>
-                          <p>Nenhuma mídia adicionada ainda</p>
-                        </div>
+                      </h3>
+                      
+                      {modalityMedia.length === 0 ? (
+                        <p className="text-muted-foreground italic">
+                          Nenhuma mídia adicionada ainda
+                        </p>
                       ) : (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                          {getModalityMedia(modality.id).map((item) => (
-                            <Card key={item.id} className="overflow-hidden">
-                              <CardContent className="p-0">
-                                <div className="aspect-video bg-muted flex items-center justify-center">
-                                  {item.type === 'video' ? (
-                                    <VideoCamera size={32} className="text-muted-foreground" />
-                                  ) : (
-                                    <ImageIcon size={32} className="text-muted-foreground" />
-                                  )}
-                                </div>
-                                <div className="p-4">
-                                  <div className="flex items-center justify-between">
-                                    <div className="min-w-0 flex-1">
-                                      <h4 className="font-medium text-sm truncate">
-                                        {item.title}
-                                      </h4>
-                                      <p className="text-xs text-muted-foreground capitalize">
-                                        {item.type === 'video' ? 'Vídeo' : 'Imagem'}
-                                      </p>
-                                    </div>
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={() => handleDeleteMedia(item.id)}
-                                      className="text-destructive hover:text-destructive"
-                                    >
-                                      <Trash size={16} />
-                                    </Button>
-                                  </div>
-                                </div>
-                              </CardContent>
-                            </Card>
+                        <div className="space-y-2">
+                          {modalityMedia.map((item) => (
+                            <div 
+                              key={item.id}
+                              className="flex items-center justify-between bg-muted/50 p-3 rounded-md"
+                            >
+                              <div>
+                                <p className="font-medium">{item.title}</p>
+                                <p className="text-sm text-muted-foreground">
+                                  {item.type === 'image' ? 'Imagem' : 'Vídeo'} • {item.url.substring(0, 30)}...
+                                </p>
+                              </div>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => removeMedia(item.id)}
+                              >
+                                <Trash2 size={14} />
+                              </Button>
+                            </div>
                           ))}
                         </div>
                       )}
-                    </CardContent>
-                  </Card>
-                </TabsContent>
-              ))}
-            </Tabs>
-          </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </CardContent>
+          </Card>
         </div>
+
+        <Card className="mt-8">
+          <CardHeader>
+            <CardTitle>Instruções de Uso</CardTitle>
+          </CardHeader>
+          <CardContent className="prose prose-sm max-w-none">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <h4 className="font-semibold mb-2">Como adicionar mídia:</h4>
+                <ol className="list-decimal list-inside space-y-1 text-sm text-muted-foreground">
+                  <li>Selecione a modalidade desejada</li>
+                  <li>Escolha o tipo de mídia (imagem ou vídeo)</li>
+                  <li>Digite um título descritivo</li>
+                  <li>Cole a URL da mídia</li>
+                  <li>Clique em "Adicionar Mídia"</li>
+                </ol>
+              </div>
+              <div>
+                <h4 className="font-semibold mb-2">Dicas importantes:</h4>
+                <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
+                  <li>Use URLs diretas de imagens (jpg, png, webp)</li>
+                  <li>Para vídeos, use URLs do YouTube ou Vimeo</li>
+                  <li>Títulos devem ser descritivos e informativos</li>
+                  <li>Teste as URLs antes de adicionar</li>
+                </ul>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   )
