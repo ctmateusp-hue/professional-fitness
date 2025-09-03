@@ -21,6 +21,7 @@ export type MediaItem = {
   type: 'image' | 'video'
   url: string
   title: string
+  description?: string
   thumbnail?: string
 }
 
