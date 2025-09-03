@@ -1,6 +1,8 @@
 import { Button } from '@/components/ui/button'
 import { Shield } from '@phosphor-icons/react'
 import { Logo } from './Logo'
+import { motion, useScroll, useTransform } from 'framer-motion'
+import { useEffect, useState } from 'react'
 
 interface HeaderProps {
   onAdminClick: () => void
@@ -9,6 +11,19 @@ interface HeaderProps {
 }
 
 export function Header({ onAdminClick, isAdmin, onAdminLogin }: HeaderProps) {
+  const [isScrolled, setIsScrolled] = useState(false)
+  const { scrollY } = useScroll()
+  
+  const headerY = useTransform(scrollY, [0, 100], [0, -10])
+  const logoScale = useTransform(scrollY, [0, 100], [1, 0.9])
+
+  useEffect(() => {
+    const unsubscribe = scrollY.on("change", (latest) => {
+      setIsScrolled(latest > 50)
+    })
+    return () => unsubscribe()
+  }, [scrollY])
+
   const handleAdminAccess = async () => {
     if (!isAdmin) {
       const user = await spark.user()
@@ -31,47 +46,92 @@ export function Header({ onAdminClick, isAdmin, onAdminLogin }: HeaderProps) {
   }
 
   return (
-    <header className="bg-white shadow-sm border-b">
+    <motion.header 
+      className={`sticky top-0 z-50 transition-all duration-300 ${
+        isScrolled 
+          ? 'bg-white/95 backdrop-blur-md shadow-lg border-b' 
+          : 'bg-white shadow-sm border-b'
+      }`}
+      style={{ y: headerY }}
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          <div className="flex items-center gap-3">
-            <Logo size={50} showText={false} />
-            <h1 className="text-xl font-black text-foreground tracking-tight">
+          <motion.div 
+            className="flex items-center gap-3"
+            style={{ scale: logoScale }}
+          >
+            <motion.div
+              animate={isScrolled ? {
+                rotate: [0, 5, 0],
+                transition: { duration: 2, repeat: Infinity }
+              } : {}}
+            >
+              <Logo size={50} showText={false} animated={true} />
+            </motion.div>
+            <motion.h1 
+              className="text-xl font-black text-foreground tracking-tight"
+              animate={isScrolled ? { x: [0, 2, 0] } : {}}
+              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+            >
               CT MATEUS PAVANELLO
-            </h1>
-          </div>
+            </motion.h1>
+          </motion.div>
           
           <nav className="hidden md:flex items-center gap-8">
-            <a href="#home" className="text-foreground hover:text-primary transition-colors font-medium">
+            <motion.a 
+              href="#home" 
+              className="text-foreground hover:text-primary transition-colors font-medium"
+              whileHover={{ scale: 1.05, y: -2 }}
+              transition={{ type: "spring", stiffness: 300 }}
+            >
               Início
-            </a>
-            <a href="#modalidades" className="text-foreground hover:text-primary transition-colors font-medium">
+            </motion.a>
+            <motion.a 
+              href="#modalidades" 
+              className="text-foreground hover:text-primary transition-colors font-medium"
+              whileHover={{ scale: 1.05, y: -2 }}
+              transition={{ type: "spring", stiffness: 300 }}
+            >
               Modalidades
-            </a>
-            <a href="#galeria" className="text-foreground hover:text-primary transition-colors font-medium">
+            </motion.a>
+            <motion.a 
+              href="#galeria" 
+              className="text-foreground hover:text-primary transition-colors font-medium"
+              whileHover={{ scale: 1.05, y: -2 }}
+              transition={{ type: "spring", stiffness: 300 }}
+            >
               Galeria
-            </a>
-            <a href="#contato" className="text-foreground hover:text-primary transition-colors font-medium">
+            </motion.a>
+            <motion.a 
+              href="#contato" 
+              className="text-foreground hover:text-primary transition-colors font-medium"
+              whileHover={{ scale: 1.05, y: -2 }}
+              transition={{ type: "spring", stiffness: 300 }}
+            >
               Contato
-            </a>
+            </motion.a>
           </nav>
           
           <div className="flex items-center gap-4">
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={handleAdminAccess}
-              className="hidden sm:flex items-center gap-2"
-            >
-              <Shield size={16} />
-              Admin
-            </Button>
-            <Button className="bg-accent hover:bg-accent/90 text-accent-foreground">
-              Matricule-se
-            </Button>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={handleAdminAccess}
+                className="hidden sm:flex items-center gap-2"
+              >
+                <Shield size={16} />
+                Admin
+              </Button>
+            </motion.div>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Button className="bg-accent hover:bg-accent/90 text-accent-foreground">
+                Matricule-se
+              </Button>
+            </motion.div>
           </div>
         </div>
       </div>
-    </header>
+    </motion.header>
   )
 }
