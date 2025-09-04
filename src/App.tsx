@@ -4,9 +4,14 @@ import { Header } from './components/Header'
 import { Hero } from './components/Hero'
 import { ModalityCards } from './components/ModalityCards'
 import { Gallery } from './components/Gallery'
+import { Pricing } from './components/Pricing'
 import { Contact } from './components/Contact'
+import { Footer } from './components/Footer'
 import { AdminPanel } from './components/AdminPanel'
 import { Toaster } from '@/components/ui/sonner'
+import whatsappIcon from './assets/whatsapp.png'
+
+const WHATSAPP_LINK = "https://wa.me/5517988275111?text=Quero%20agendar%20uma%20aula%20experimental";
 
 export type Modality = {
   id: string
@@ -50,14 +55,14 @@ function App() {
   const [media] = useKV<MediaItem[]>('gym-media', [])
   const [selectedModalityId, setSelectedModalityId] = useState<string | null>(null)
 
-  const selectedModality = modalities.find(m => m.id === selectedModalityId)
+  const selectedModality = modalities?.find(m => m.id === selectedModalityId)
 
   if (currentView === 'admin') {
     return (
       <div className="min-h-screen bg-background">
         <AdminPanel 
           onBack={() => setCurrentView('home')}
-          modalities={modalities}
+          modalities={modalities || []}
         />
         <Toaster />
       </div>
@@ -75,19 +80,36 @@ function App() {
       <main>
         <Hero />
         <ModalityCards 
-          modalities={modalities}
+          modalities={modalities || []}
           onModalityClick={setSelectedModalityId}
         />
         {selectedModality && (
           <Gallery 
             modality={selectedModality}
-            media={media.filter(m => m.modalityId === selectedModality.id)}
+            media={(media || []).filter(m => m.modalityId === selectedModality.id)}
             onClose={() => setSelectedModalityId(null)}
           />
         )}
+        <Pricing />
         <Contact />
       </main>
       
+      {/* Botão flutuante do WhatsApp */}
+      <a
+        href={WHATSAPP_LINK}
+        target="_blank"
+        rel="noreferrer"
+        className="fixed bottom-6 right-6 z-50 rounded-full bg-green-500 text-white p-3 shadow-lg hover:bg-green-600 transition-colors duration-200 hover:shadow-xl"
+        aria-label="Abrir WhatsApp"
+      >
+        <img 
+          src={whatsappIcon} 
+          alt="WhatsApp" 
+          className="w-8 h-8"
+        />
+      </a>
+      
+      <Footer />
       <Toaster />
     </div>
   )

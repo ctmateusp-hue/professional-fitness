@@ -41,10 +41,6 @@
 @import '@radix-ui/colors/gold-dark.css' layer(base);
 @import '@radix-ui/colors/brown.css' layer(base);
 @import '@radix-ui/colors/brown-dark.css' layer(base);
-@import '@radix-ui/colors/orange.css' layer(base);
-@import '@radix-ui/colors/orange-dark.css' layer(base);
-@import '@radix-ui/colors/amber.css' layer(base);
-@import '@radix-ui/colors/amber-dark.css' layer(base);
 @import '@radix-ui/colors/yellow.css' layer(base);
 @import '@radix-ui/colors/yellow-dark.css' layer(base);
 @import '@radix-ui/colors/lime.css' layer(base);
@@ -107,8 +103,6 @@
     --bronze-contrast: #fff;
     --gold-contrast: #fff;
     --brown-contrast: #fff;
-    --orange-contrast: #fff;
-    --amber-contrast: #000;
     --yellow-contrast: #000;
     --lime-contrast: #000;
     --mint-contrast: #000;
@@ -166,6 +160,9 @@
     --size-72: calc(18rem * var(--size-scale));
     --size-80: calc(20rem * var(--size-scale));
     --size-96: calc(24rem * var(--size-scale));
+
+    /* Spacing - Copy of size scale for spacing function */
+    --spacing: var(--size-scale);
 
     /* Border radii */
     --radius-factor: 1;

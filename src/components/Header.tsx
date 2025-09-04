@@ -27,19 +27,13 @@ export function Header({ onAdminClick, isAdmin, onAdminLogin }: HeaderProps) {
 
   const handleAdminAccess = async () => {
     if (!isAdmin) {
-      const user = await spark.user()
-      if (user.isOwner) {
+      // Simple password check for demo
+      const password = prompt('Digite a senha do administrador:')
+      if (password === 'admin123') {
         onAdminLogin()
         onAdminClick()
       } else {
-        // Simple password check for demo
-        const password = prompt('Digite a senha do administrador:')
-        if (password === 'admin123') {
-          onAdminLogin()
-          onAdminClick()
-        } else {
-          toast.error('Senha incorreta!')
-        }
+        toast.error('Senha incorreta!')
       }
     } else {
       onAdminClick()
@@ -104,6 +98,14 @@ export function Header({ onAdminClick, isAdmin, onAdminLogin }: HeaderProps) {
               Galeria
             </motion.a>
             <motion.a 
+              href="#precos" 
+              className="text-foreground hover:text-primary transition-colors font-medium"
+              whileHover={{ scale: 1.05, y: -2 }}
+              transition={{ type: "spring", stiffness: 300 }}
+            >
+              Preços
+            </motion.a>
+            <motion.a 
               href="#contato" 
               className="text-foreground hover:text-primary transition-colors font-medium"
               whileHover={{ scale: 1.05, y: -2 }}
@@ -123,11 +125,6 @@ export function Header({ onAdminClick, isAdmin, onAdminLogin }: HeaderProps) {
               >
                 <Shield size={16} />
                 Admin
-              </Button>
-            </motion.div>
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <Button className="bg-accent hover:bg-accent/90 text-accent-foreground">
-                Matricule-se
               </Button>
             </motion.div>
           </div>
