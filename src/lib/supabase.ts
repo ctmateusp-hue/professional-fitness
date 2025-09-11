@@ -1,32 +1,17 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+// Use direct values for now since env vars are not working in production
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://cgrkvayldjctwdaqtbfd.supabase.co'
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNncmt2YXlsZGpjdHdkYXF0YmZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0NTQ4NDIsImV4cCI6MjA3MzAzMDg0Mn0.wCxEJ9PzyDsmqjQTYAWrPAonHLCKM6gyWqbR_OdOFe8'
 
-// Debug logs for production
-console.log('Environment variables debug:', {
-  VITE_SUPABASE_URL: supabaseUrl ? 'Present' : 'Missing',
-  VITE_SUPABASE_ANON_KEY: supabaseAnonKey ? 'Present' : 'Missing',
-  NODE_ENV: import.meta.env.MODE
+// Debug logs
+console.log('Supabase config:', {
+  url: supabaseUrl ? 'configured' : 'missing',
+  key: supabaseAnonKey ? 'configured' : 'missing',
+  mode: import.meta.env.MODE
 })
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('Missing environment variables:', {
-    supabaseUrl: !!supabaseUrl,
-    supabaseAnonKey: !!supabaseAnonKey,
-    allEnvVars: import.meta.env
-  })
-  throw new Error(`Missing Supabase environment variables. URL: ${!!supabaseUrl}, Key: ${!!supabaseAnonKey}`)
-}
-
-// Fallback for production if env vars are not available
-const fallbackUrl = 'https://cgrkvayldjctwdaqtbfd.supabase.co'
-const fallbackKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNncmt2YXlsZGpjdHdkYXF0YmZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0NTQ4NDIsImV4cCI6MjA3MzAzMDg0Mn0.wCxEJ9PzyDsmqjQTYAWrPAonHLCKM6gyWqbR_OdOFe8'
-
-const finalUrl = supabaseUrl || fallbackUrl
-const finalKey = supabaseAnonKey || fallbackKey
-
-export const supabase = createClient(finalUrl, finalKey)
+export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 // Database types
 export interface MediaItem {
