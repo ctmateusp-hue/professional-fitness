@@ -51,11 +51,7 @@ function App() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header 
-        onAdminClick={() => console.log('Admin clicked')}
-        isAdmin={false}
-        onAdminLogin={() => console.log('Admin login')}
-      />
+      <Header />
       
       <main>
         <Hero />

@@ -1,17 +1,8 @@
-import { Button } from '@/components/ui/button'
-import { FaShieldAlt } from 'react-icons/fa'
 import { Logo } from './Logo'
 import { motion, useScroll, useTransform } from 'framer-motion'
 import { useEffect, useState } from 'react'
-import { toast } from 'sonner'
 
-interface HeaderProps {
-  onAdminClick: () => void
-  isAdmin: boolean
-  onAdminLogin: () => void
-}
-
-export function Header({ onAdminClick, isAdmin, onAdminLogin }: HeaderProps) {
+export function Header() {
   const [isScrolled, setIsScrolled] = useState(false)
   const { scrollY } = useScroll()
   
@@ -24,21 +15,6 @@ export function Header({ onAdminClick, isAdmin, onAdminLogin }: HeaderProps) {
     })
     return () => unsubscribe()
   }, [scrollY])
-
-  const handleAdminAccess = async () => {
-    if (!isAdmin) {
-      // Simple password check for demo
-      const password = prompt('Digite a senha do administrador:')
-      if (password === 'admin123') {
-        onAdminLogin()
-        onAdminClick()
-      } else {
-        toast.error('Senha incorreta!')
-      }
-    } else {
-      onAdminClick()
-    }
-  }
 
   return (
     <motion.header 
@@ -114,20 +90,6 @@ export function Header({ onAdminClick, isAdmin, onAdminLogin }: HeaderProps) {
               Contato
             </motion.a>
           </nav>
-          
-          <div className="flex items-center gap-4">
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={handleAdminAccess}
-                className="hidden sm:flex items-center gap-2"
-              >
-                <FaShieldAlt size={16} />
-                Admin
-              </Button>
-            </motion.div>
-          </div>
         </div>
       </div>
     </motion.header>

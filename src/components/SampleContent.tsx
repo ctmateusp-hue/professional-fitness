@@ -98,7 +98,7 @@ export function SampleContent({ className }: SampleContentProps) {
 
   const addSampleContent = () => {
     // Filter out content that already exists
-    const existingIds = new Set(media.map(m => m.id))
+    const existingIds = new Set((media || []).map(m => m.id))
     const newContent = sampleGymMedia.filter(item => !existingIds.has(item.id))
     
     if (newContent.length === 0) {
@@ -106,7 +106,7 @@ export function SampleContent({ className }: SampleContentProps) {
       return
     }
 
-    setMedia((current) => [...current, ...newContent])
+    setMedia((current) => [...(current || []), ...newContent])
     toast.success(`${newContent.length} itens de exemplo adicionados com sucesso!`)
   }
 
@@ -115,7 +115,7 @@ export function SampleContent({ className }: SampleContentProps) {
     toast.success('Toda a mídia foi removida!')
   }
 
-  const existingIds = new Set(media.map(m => m.id))
+  const existingIds = new Set((media || []).map(m => m.id))
   const hasAllSamples = sampleGymMedia.every(item => existingIds.has(item.id))
 
   return (
@@ -157,7 +157,7 @@ export function SampleContent({ className }: SampleContentProps) {
             {hasAllSamples ? 'Já Adicionado' : 'Adicionar Exemplos'}
           </Button>
           
-          {media.length > 0 && (
+          {(media?.length || 0) > 0 && (
             <Button 
               variant="outline" 
               onClick={clearAllContent}

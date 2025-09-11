@@ -8,6 +8,7 @@ import { Pricing } from './components/Pricing'
 import { Contact } from './components/Contact'
 import { Footer } from './components/Footer'
 import { AdminPanel } from './components/AdminPanel'
+import { AdminLogin } from './components/AdminLogin'
 import { Toaster } from '@/components/ui/sonner'
 import { usePersistentStorage } from './lib/storage'
 import whatsappIcon from './assets/whatsapp.png'
@@ -51,9 +52,22 @@ const defaultModalities: Modality[] = [
 ]
 
 function App() {
-  const [currentView, setCurrentView] = useState<'home' | 'admin' | 'transformations'>('home')
-  const [isAdmin, setIsAdmin] = useState(false)
+  // Initialize currentView based on current URL
+  const getInitialView = (): 'home' | 'admin' | 'transformations' => {
+    const hash = window.location.hash
+    const pathname = window.location.pathname
+    
+    if (pathname === '/admin' || pathname.endsWith('/admin') || hash === '#/admin' || hash === '#admin') {
+      return 'admin'
+    } else if (hash === '#/transformations' || hash === '#transformations') {
+      return 'transformations'
+    }
+    return 'home'
+  }
+  
+  const [currentView, setCurrentView] = useState<'home' | 'admin' | 'transformations'>(getInitialView())
   const [selectedModalityId, setSelectedModalityId] = useState<string | null>(null)
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false)
   
   // Use persistent storage
   const { data, loadData, saveData, isLoading } = usePersistentStorage()
@@ -65,28 +79,49 @@ function App() {
   const transformations = media?.filter(item => item.category === 'transformation') || []
   const regularMedia = media?.filter(item => item.category !== 'transformation') || []
   
-  // Load data when app starts
+  // Check for admin route in URL hash and path
+  useEffect(() => {
+    const checkAdminRoute = () => {
+      const hash = window.location.hash
+      const pathname = window.location.pathname
+      
+      // If someone accesses /admin directly, redirect to /#/admin
+      if (pathname === '/admin' || pathname.endsWith('/admin')) {
+        window.location.replace(window.location.origin + '/#/admin')
+        return
+      }
+      
+      // Only handle specific app routes, don't interfere with anchor navigation
+      if (hash === '#/admin' || hash === '#admin') {
+        setCurrentView('admin')
+      } else if (hash === '#/transformations' || hash === '#transformations') {
+        setCurrentView('transformations')
+      }
+      // Let all other hashes (#modalidades, #galeria, etc.) work normally for anchor navigation
+    }
+    
+    // Check on load
+    checkAdminRoute()
+    
+    // Listen for hash changes only for our specific routes
+    const handleHashChange = () => {
+      const hash = window.location.hash
+      if (hash === '#/admin' || hash === '#admin' || hash === '#/transformations' || hash === '#transformations') {
+        checkAdminRoute()
+      }
+    }
+    
+    window.addEventListener('hashchange', handleHashChange)
+    
+    return () => {
+      window.removeEventListener('hashchange', handleHashChange)
+    }
+  }, [])
+  
+  // Load data only once when app starts
   useEffect(() => {
     loadData()
   }, [])
-
-  // Auto-refresh when returning to home view
-  useEffect(() => {
-    if (currentView === 'home') {
-      loadData()
-    }
-  }, [currentView])
-
-  const handleBackFromAdmin = (openGallery?: { modalityId: string }) => {
-    setCurrentView('home')
-    // Reload data to get fresh content
-    loadData()
-    
-    if (openGallery) {
-      // Open the gallery for the specific modality
-      setSelectedModalityId(openGallery.modalityId)
-    }
-  }
 
   const handleShowTransformations = () => {
     setCurrentView('transformations')
@@ -102,6 +137,18 @@ function App() {
     await saveData(newData)
   }
 
+  const handleAddMedia = async (newMedia: MediaItem) => {
+    const updatedMedia = [...(media || []), newMedia]
+    await saveData({ media: updatedMedia, modalities: modalities || [] })
+    await loadData() // Reload to get fresh data
+  }
+
+  const handleDeleteMedia = async (mediaId: string) => {
+    const updatedMedia = (media || []).filter(m => m.id !== mediaId)
+    await saveData({ media: updatedMedia, modalities: modalities || [] })
+    await loadData() // Reload to get fresh data
+  }
+
   if (isLoading && currentView === 'home') {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -114,11 +161,21 @@ function App() {
   }
 
   if (currentView === 'admin') {
+    if (!isAdminAuthenticated) {
+      return <AdminLogin onLogin={() => setIsAdminAuthenticated(true)} />
+    }
+    
     return (
       <div className="min-h-screen bg-background">
         <AdminPanel 
-          onBack={handleBackFromAdmin}
+          onBack={() => {
+            setCurrentView('home')
+            setIsAdminAuthenticated(false) // Logout when going back
+          }}
           modalities={modalities || []}
+          media={media || []}
+          onAddMedia={handleAddMedia}
+          onDeleteMedia={handleDeleteMedia}
         />
         <Toaster />
       </div>
@@ -139,11 +196,7 @@ function App() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header 
-        onAdminClick={() => setCurrentView('admin')}
-        isAdmin={isAdmin}
-        onAdminLogin={() => setIsAdmin(true)}
-      />
+      <Header />
       
       <main>
         <Hero onShowTransformations={handleShowTransformations} />

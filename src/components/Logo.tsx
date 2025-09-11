@@ -16,28 +16,16 @@ export function Logo({ className = "", size = 120, showText = true, animated = f
   const containerVariants = {
     initial: { scale: 1 },
     hover: { 
-      scale: 1.05,
-      transition: { 
-        duration: 0.3, 
-        ease: "easeOut",
-        type: "spring",
-        stiffness: 200
-      }
+      scale: 1.05
     }
   }
 
   const circleVariants = {
     initial: { 
-      rotateY: 0,
-      boxShadow: "0 4px 20px rgba(45, 55, 72, 0.2)"
+      rotateY: 0
     },
     hover: { 
-      rotateY: 10,
-      boxShadow: "0 8px 30px rgba(45, 55, 72, 0.3)",
-      transition: { 
-        duration: 0.4, 
-        ease: "easeOut" 
-      }
+      rotateY: 10
     }
   }
 

@@ -10,6 +10,16 @@
   ],
   "routes": [
     {
+      "src": "/admin",
+      "status": 302,
+      "headers": { "Location": "/#/admin" }
+    },
+    {
+      "src": "/transformations", 
+      "status": 302,
+      "headers": { "Location": "/#/transformations" }
+    },
+    {
       "src": "/assets/(.*)",
       "dest": "/assets/$1"
     },
