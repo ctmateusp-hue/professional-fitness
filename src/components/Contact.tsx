@@ -1,9 +1,12 @@
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { MapPin, Clock, Phone, Envelope, InstagramLogo } from '@phosphor-icons/react'
+import React from 'react'
+import { toast } from 'sonner'
+import { FaMapMarkerAlt, FaClock, FaPhone, FaEnvelope, FaInstagram } from 'react-icons/fa'
 import whatsappIcon from '../assets/whatsapp.png'
 
 const WHATSAPP_LINK = "https://wa.me/5517988275111?text=Quero%20agendar%20uma%20aula%20experimental";
+const INSTAGRAM_LINK = "https://www.instagram.com/ctmateuspavanello?igsh=YW43b2lpeWNnZWY3&utm_source=qr";
 
 export function Contact() {
   return (
@@ -26,7 +29,7 @@ export function Contact() {
             <div className="space-y-6">
               <div className="flex items-start gap-4">
                 <div className="w-12 h-12 bg-accent rounded-lg flex items-center justify-center flex-shrink-0">
-                  <MapPin size={24} className="text-accent-foreground" weight="bold" />
+                  <FaMapMarkerAlt size={24} className="text-accent-foreground" />
                 </div>
                 <div>
                   <h4 className="font-semibold mb-1">Endereço</h4>
@@ -40,20 +43,20 @@ export function Contact() {
               
               <div className="flex items-start gap-4">
                 <div className="w-12 h-12 bg-accent rounded-lg flex items-center justify-center flex-shrink-0">
-                  <Clock size={24} className="text-accent-foreground" weight="bold" />
+                  <FaClock size={24} className="text-accent-foreground" />
                 </div>
                 <div>
                   <h4 className="font-semibold mb-1">Horário de Funcionamento</h4>
                   <p className="text-primary-foreground/80">
-                    ⏰ 05:50 às 09:00<br />
-                    ⏰ 15:30 às 20:00
+                    <FaClock size={16} className="inline mr-1" /> 05:50 às 09:00<br />
+                    <FaClock size={16} className="inline mr-1" /> 15:30 às 20:00
                   </p>
                 </div>
               </div>
               
               <div className="flex items-start gap-4">
                 <div className="w-12 h-12 bg-accent rounded-lg flex items-center justify-center flex-shrink-0">
-                  <Phone size={24} className="text-accent-foreground" weight="bold" />
+                  <FaPhone size={24} className="text-accent-foreground" />
                 </div>
                 <div>
                   <h4 className="font-semibold mb-1">WhatsApp/Telefone</h4>
@@ -70,7 +73,7 @@ export function Contact() {
               
               <div className="flex items-start gap-4">
                 <div className="w-12 h-12 bg-accent rounded-lg flex items-center justify-center flex-shrink-0">
-                  <Envelope size={24} className="text-accent-foreground" weight="bold" />
+                  <FaEnvelope size={24} className="text-accent-foreground" />
                 </div>
                 <div>
                   <h4 className="font-semibold mb-1">Email</h4>
@@ -87,9 +90,16 @@ export function Contact() {
             <div className="mt-8">
               <h4 className="font-semibold mb-4">Siga-nos nas Redes Sociais</h4>
               <div className="flex gap-4">
-                <Button size="sm" variant="secondary" className="bg-accent hover:bg-accent/90">
-                  <InstagramLogo size={18} className="mr-2" weight="bold" />
-                  Instagram
+                <Button 
+                  size="sm" 
+                  variant="secondary" 
+                  className="bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500 hover:from-purple-600 hover:via-pink-600 hover:to-orange-600 text-white border-0"
+                  asChild
+                >
+                  <a href={INSTAGRAM_LINK} target="_blank" rel="noreferrer">
+                    <FaInstagram size={18} className="mr-2" />
+                    Instagram
+                  </a>
                 </Button>
                 <Button 
                   size="sm" 
@@ -114,7 +124,7 @@ export function Contact() {
               
               <div className="space-y-6">
                 <div className="flex items-center gap-3 mb-4">
-                  <MapPin size={24} className="text-accent" weight="bold" />
+                  <FaMapMarkerAlt size={24} className="text-accent" />
                   <div>
                     <p className="font-semibold text-primary-foreground">
                       Rua Benevenuto Pereira Silva, Nº 329
@@ -138,10 +148,10 @@ export function Contact() {
                   ></iframe>
                 </div>
                 
-                <div className="flex flex-col sm:flex-row gap-3">
+                <div className="flex justify-center">
                   <Button 
                     size="lg" 
-                    className="flex-1 bg-accent hover:bg-accent/90 text-accent-foreground font-semibold"
+                    className="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold"
                     asChild
                   >
                     <a 
@@ -149,20 +159,8 @@ export function Contact() {
                       target="_blank" 
                       rel="noreferrer"
                     >
-                      <MapPin size={20} className="mr-2" weight="bold" />
+                      <FaMapMarkerAlt size={20} className="mr-2" />
                       Ver no Google Maps
-                    </a>
-                  </Button>
-                  
-                  <Button 
-                    size="lg" 
-                    variant="secondary"
-                    className="flex-1 bg-green-500 hover:bg-green-600 text-white font-semibold"
-                    asChild
-                  >
-                    <a href={WHATSAPP_LINK} target="_blank" rel="noreferrer">
-                      <img src={whatsappIcon} alt="WhatsApp" className="w-4 h-4 mr-2" />
-                      Como Chegar
                     </a>
                   </Button>
                 </div>

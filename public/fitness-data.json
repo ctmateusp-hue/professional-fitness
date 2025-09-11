@@ -1,0 +1,20 @@
+{
+  "media": [],
+  "modalities": [
+    {
+      "id": "functional",
+      "title": "FUNCIONAL/CROSS",
+      "description": "Nossos treinos são elaborados com uma metodologia própria. Voltado para as pessoas da nossa cidade. São exercícios que usam bastante o peso corporal associados com aparelhos de musculação."
+    },
+    {
+      "id": "musculacao",
+      "title": "MUSCULAÇÃO",
+      "description": "Treinos elaborados com exercícios de resultado, ou seja, focando no que o corpo mais precisa, tanto para estética, fortalecimento, ganho de massa….etc."
+    },
+    {
+      "id": "zumba",
+      "title": "ZUMBA",
+      "description": "Aula de dança com as melhores e mais animadas músicas! Coreografias adaptadas para você aproveitar o máximo a aula!"
+    }
+  ]
+}

@@ -1,14 +1,15 @@
-import { useState } from 'react'
-import { useKV } from '@github/spark/hooks'
+import { useState, useEffect } from 'react'
 import { Header } from './components/Header'
 import { Hero } from './components/Hero'
 import { ModalityCards } from './components/ModalityCards'
 import { Gallery } from './components/Gallery'
+import { Transformations } from './components/Transformations'
 import { Pricing } from './components/Pricing'
 import { Contact } from './components/Contact'
 import { Footer } from './components/Footer'
 import { AdminPanel } from './components/AdminPanel'
 import { Toaster } from '@/components/ui/sonner'
+import { usePersistentStorage } from './lib/storage'
 import whatsappIcon from './assets/whatsapp.png'
 
 const WHATSAPP_LINK = "https://wa.me/5517988275111?text=Quero%20agendar%20uma%20aula%20experimental";
@@ -28,6 +29,7 @@ export type MediaItem = {
   title: string
   description?: string
   thumbnail?: string
+  category?: 'transformation' | 'regular' // Nova categoria para transformações
 }
 
 const defaultModalities: Modality[] = [
@@ -49,20 +51,86 @@ const defaultModalities: Modality[] = [
 ]
 
 function App() {
-  const [currentView, setCurrentView] = useState<'home' | 'admin'>('home')
+  const [currentView, setCurrentView] = useState<'home' | 'admin' | 'transformations'>('home')
   const [isAdmin, setIsAdmin] = useState(false)
-  const [modalities] = useKV<Modality[]>('gym-modalities', defaultModalities)
-  const [media] = useKV<MediaItem[]>('gym-media', [])
   const [selectedModalityId, setSelectedModalityId] = useState<string | null>(null)
+  
+  // Use persistent storage
+  const { data, loadData, saveData, isLoading } = usePersistentStorage()
+  const { media, modalities } = data
 
   const selectedModality = modalities?.find(m => m.id === selectedModalityId)
+  
+  // Filter transformations from media
+  const transformations = media?.filter(item => item.category === 'transformation') || []
+  const regularMedia = media?.filter(item => item.category !== 'transformation') || []
+  
+  // Load data when app starts
+  useEffect(() => {
+    loadData()
+  }, [])
+
+  // Auto-refresh when returning to home view
+  useEffect(() => {
+    if (currentView === 'home') {
+      loadData()
+    }
+  }, [currentView])
+
+  const handleBackFromAdmin = (openGallery?: { modalityId: string }) => {
+    setCurrentView('home')
+    // Reload data to get fresh content
+    loadData()
+    
+    if (openGallery) {
+      // Open the gallery for the specific modality
+      setSelectedModalityId(openGallery.modalityId)
+    }
+  }
+
+  const handleShowTransformations = () => {
+    setCurrentView('transformations')
+    setSelectedModalityId(null)
+  }
+
+  const handleBackFromTransformations = () => {
+    setCurrentView('home')
+    setSelectedModalityId(null)
+  }
+
+  const handleDataUpdate = async (newData: { media: MediaItem[], modalities: Modality[] }) => {
+    await saveData(newData)
+  }
+
+  if (isLoading && currentView === 'home') {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Carregando...</p>
+        </div>
+      </div>
+    )
+  }
 
   if (currentView === 'admin') {
     return (
       <div className="min-h-screen bg-background">
         <AdminPanel 
-          onBack={() => setCurrentView('home')}
+          onBack={handleBackFromAdmin}
           modalities={modalities || []}
+        />
+        <Toaster />
+      </div>
+    )
+  }
+
+  if (currentView === 'transformations') {
+    return (
+      <div className="min-h-screen bg-background">
+        <Transformations 
+          transformations={transformations}
+          onClose={handleBackFromTransformations}
         />
         <Toaster />
       </div>
@@ -78,15 +146,16 @@ function App() {
       />
       
       <main>
-        <Hero />
+        <Hero onShowTransformations={handleShowTransformations} />
         <ModalityCards 
           modalities={modalities || []}
           onModalityClick={setSelectedModalityId}
+          media={regularMedia || []}
         />
         {selectedModality && (
           <Gallery 
             modality={selectedModality}
-            media={(media || []).filter(m => m.modalityId === selectedModality.id)}
+            media={(regularMedia || []).filter(m => m.modalityId === selectedModality.id)}
             onClose={() => setSelectedModalityId(null)}
           />
         )}

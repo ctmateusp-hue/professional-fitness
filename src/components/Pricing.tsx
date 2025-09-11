@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { Check, Crown, Barbell, MusicNote, Calendar, Timer, Star } from '@phosphor-icons/react'
+import { FaCheck, FaCrown, FaDumbbell, FaMusic, FaCalendar, FaClock, FaStar } from 'react-icons/fa'
 import { motion } from 'framer-motion'
 
 const WHATSAPP_LINK = "https://wa.me/5517988275111?text=Quero%20saber%20mais%20sobre%20os%20planos%20da%20academia";
@@ -17,7 +17,7 @@ export function Pricing() {
         "Acompanhamento profissional",
         "Horário livre"
       ],
-      icon: Barbell,
+      icon: FaDumbbell,
       color: "bg-blue-500",
       special: false
     },
@@ -30,11 +30,11 @@ export function Pricing() {
         "Todas as modalidades",
         "Musculação + Funcional + Zumba",
         "Treino personalizado",
-        "Acompanhamento nutricional",
+        "Acompanhamento profissional",
         "Horário livre",
         "Desconto na fidelidade"
       ],
-      icon: Crown,
+      icon: FaCrown,
       color: "bg-gradient-to-r from-gray-800 to-black",
       special: true
     },
@@ -44,11 +44,11 @@ export function Pricing() {
       description: "Aulas de dança e condicionamento",
       features: [
         "Aulas de Zumba",
-        "Professora especializada",
+        "Professor especializado",
         "Ambiente climatizado",
         "Horários específicos"
       ],
-      icon: MusicNote,
+      icon: FaMusic,
       color: "bg-pink-500",
       special: false
     }
@@ -61,7 +61,7 @@ export function Pricing() {
       monthlyPrice: "60",
       period: "3 meses",
       savings: "R$ 30",
-      icon: Timer,
+      icon: FaClock,
       color: "bg-blue-600"
     },
     {
@@ -70,7 +70,7 @@ export function Pricing() {
       monthlyPrice: "100",
       period: "3 meses",
       savings: "R$ 90",
-      icon: Calendar,
+      icon: FaCalendar,
       color: "bg-green-600"
     },
     {
@@ -79,7 +79,7 @@ export function Pricing() {
       monthlyPrice: "87",
       period: "6 meses",
       savings: "R$ 260",
-      icon: Calendar,
+      icon: FaCalendar,
       color: "bg-purple-600"
     },
     {
@@ -88,7 +88,7 @@ export function Pricing() {
       monthlyPrice: "82",
       period: "12 meses",
       savings: "R$ 580",
-      icon: Star,
+      icon: FaStar,
       color: "bg-gradient-to-r from-purple-600 to-blue-600",
       popular: true
     }
@@ -139,7 +139,7 @@ export function Pricing() {
                   <CardContent className="p-8">
                   <div className={`text-center mb-6 ${plan.special ? 'relative' : ''}`}>
                     <div className={`w-16 h-16 ${plan.color} rounded-full flex items-center justify-center mx-auto mb-4 ${plan.special ? 'ring-4 ring-accent/20' : ''}`}>
-                      <plan.icon size={32} className="text-white" weight="bold" />
+                      <plan.icon size={32} className="text-white" />
                     </div>
                     <h4 className={`text-2xl font-bold mb-2 ${plan.special ? 'text-white' : 'text-foreground'}`}>
                       {plan.name}
@@ -150,12 +150,12 @@ export function Pricing() {
                     <div className="text-center mb-6">
                       <div className="flex items-baseline justify-center gap-2">
                         <span className={`text-4xl font-black ${plan.special ? 'text-white' : 'text-foreground'}`}>R$ {plan.price}</span>
-                        <span className={`${plan.special ? 'text-gray-300' : 'text-muted-foreground'}`}>/mês</span>
+                        <span className={`${plan.special ? 'text-gray-300' : 'text-muted-foreground'}`}>/mês*</span>
                       </div>
                       {plan.fidelityPrice && (
                         <div className="mt-2">
                           <span className={`font-semibold ${plan.special ? 'text-yellow-400' : 'text-accent'}`}>
-                            Fidelidade: R$ {plan.fidelityPrice}/mês
+                            Fidelidade: R$ {plan.fidelityPrice}/mês*
                           </span>
                         </div>
                       )}
@@ -164,7 +164,7 @@ export function Pricing() {
                     <ul className="space-y-3 mb-8">
                       {plan.features.map((feature) => (
                         <li key={feature} className="flex items-center gap-3">
-                          <Check size={20} className={`${plan.special ? 'text-yellow-400' : 'text-accent'} flex-shrink-0`} weight="bold" />
+                          <FaCheck size={20} className={`${plan.special ? 'text-yellow-400' : 'text-accent'} flex-shrink-0`} />
                           <span className={`${plan.special ? 'text-gray-200' : 'text-muted-foreground'}`}>{feature}</span>
                         </li>
                       ))}
@@ -214,7 +214,7 @@ export function Pricing() {
                   <CardContent className="p-6">
                     <div className="text-center mb-4">
                       <div className={`w-12 h-12 ${plan.color} rounded-full flex items-center justify-center mx-auto mb-3`}>
-                        <plan.icon size={24} className="text-white" weight="bold" />
+                        <plan.icon size={24} className="text-white" />
                       </div>
                       <h4 className="text-lg font-bold mb-1 text-foreground">{plan.name}</h4>
                       <span className="text-sm text-muted-foreground">{plan.period}</span>
@@ -225,7 +225,7 @@ export function Pricing() {
                         <span className="text-2xl font-black text-foreground">R$ {plan.price}</span>
                       </div>
                       <div className="text-sm text-muted-foreground mt-1">
-                        ou R$ {plan.monthlyPrice}/mês
+                        ou R$ {plan.monthlyPrice}/mês*
                       </div>
                       <div className="text-accent font-semibold text-sm mt-1">
                         Economia: {plan.savings}

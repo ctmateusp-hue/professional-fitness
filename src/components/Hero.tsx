@@ -1,10 +1,14 @@
 import { Button } from '@/components/ui/button'
-import { ArrowRight, Play } from '@phosphor-icons/react'
+import { FaArrowRight, FaPlay, FaUsers } from 'react-icons/fa'
 import { motion } from 'framer-motion'
 
 const WHATSAPP_LINK = "https://wa.me/5517988275111?text=Quero%20agendar%20uma%20aula%20experimental";
 
-export function Hero() {
+interface HeroProps {
+  onShowTransformations?: () => void
+}
+
+export function Hero({ onShowTransformations }: HeroProps) {
   return (
     <section id="home" className="relative bg-gradient-to-br from-primary to-primary/80 text-primary-foreground overflow-hidden">
       <div className="absolute inset-0 bg-black/20"></div>
@@ -106,7 +110,7 @@ export function Hero() {
               >
                 <a href={WHATSAPP_LINK} target="_blank" rel="noreferrer">
                   Comece Hoje
-                  <ArrowRight size={20} className="ml-2" weight="bold" />
+                  <FaArrowRight size={20} className="ml-2" />
                 </a>
               </Button>
               
@@ -117,9 +121,19 @@ export function Hero() {
                 asChild
               >
                 <a href="#contato" className="text-white">
-                  <Play size={20} className="mr-2 text-white" weight="fill" />
+                  <FaPlay size={20} className="mr-2 text-white" />
                   Conheça a Academia
                 </a>
+              </Button>
+
+              <Button 
+                size="lg" 
+                variant="ghost" 
+                className="border-2 border-accent/60 !text-accent !bg-transparent hover:!bg-accent/20 hover:!text-accent hover:!border-accent text-lg px-8 py-4 font-medium"
+                onClick={onShowTransformations}
+              >
+                <FaUsers size={20} className="mr-2" />
+                Faça como eles
               </Button>
             </motion.div>
           </motion.div>

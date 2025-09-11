@@ -6,21 +6,23 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { ArrowLeft, Upload, Trash2, Plus, Save, Image as ImageIcon, Play, Link, File } from '@phosphor-icons/react'
-import { useKV } from '@github/spark/hooks'
+import { FaArrowLeft, FaUpload, FaTrash, FaPlus, FaSave, FaImage, FaPlay, FaLink, FaFile, FaUsers } from 'react-icons/fa'
 import { Modality, MediaItem } from '../App'
 import { SampleContent } from './SampleContent'
 import { toast } from 'sonner'
+import { usePersistentStorage } from '../lib/storage'
 
 interface AdminPanelProps {
-  onBack: () => void
+  onBack: (openGallery?: { modalityId: string }) => void
   modalities: Modality[]
 }
 
 export function AdminPanel({ onBack, modalities }: AdminPanelProps) {
-  const [media, setMedia] = useKV<MediaItem[]>('gym-media', [])
+  const { data, saveData } = usePersistentStorage()
+  const { media } = data
   const [selectedModality, setSelectedModality] = useState<string>('')
   const [mediaType, setMediaType] = useState<'image' | 'video'>('image')
+  const [mediaCategory, setMediaCategory] = useState<'regular' | 'transformation'>('regular')
   const [mediaTitle, setMediaTitle] = useState('')
   const [mediaUrl, setMediaUrl] = useState('')
   const [mediaDescription, setMediaDescription] = useState('')
@@ -28,20 +30,30 @@ export function AdminPanel({ onBack, modalities }: AdminPanelProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleFileUpload = async (file: File) => {
-    // Create a blob URL for the file to simulate upload
-    // In a real app, you'd upload to a cloud service like AWS S3, Cloudinary, etc.
-    const blobUrl = URL.createObjectURL(file)
-    setMediaUrl(blobUrl)
-    
-    // Auto-fill title with filename if empty
-    if (!mediaTitle) {
-      setMediaTitle(file.name.replace(/\.[^/.]+$/, ""))
+    try {
+      // Convert file to base64 for permanent storage
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        const base64Url = e.target?.result as string
+        setMediaUrl(base64Url)
+        
+        // Auto-fill title with filename if empty
+        if (!mediaTitle) {
+          setMediaTitle(file.name.replace(/\.[^/.]+$/, ""))
+        }
+        
+        toast.success(`Arquivo ${file.name} carregado com sucesso!`)
+      }
+      reader.onerror = () => {
+        toast.error('Erro ao carregar o arquivo')
+      }
+      reader.readAsDataURL(file)
+    } catch (error) {
+      toast.error('Erro ao processar o arquivo')
     }
-    
-    toast.success(`Arquivo ${file.name} carregado com sucesso!`)
   }
 
-  const addMedia = () => {
+  const addMedia = async () => {
     if (!selectedModality || !mediaTitle || !mediaUrl) {
       toast.error('Preencha todos os campos obrigatórios')
       return
@@ -54,16 +66,31 @@ export function AdminPanel({ onBack, modalities }: AdminPanelProps) {
       url: mediaUrl,
       title: mediaTitle,
       description: mediaDescription,
+      category: mediaCategory,
       thumbnail: mediaType === 'video' && mediaUrl.includes('youtube.com') 
         ? `https://img.youtube.com/vi/${extractYouTubeId(mediaUrl)}/maxresdefault.jpg`
         : undefined
     }
 
-    setMedia((current) => [...current, newMedia])
+    // Update media and save to persistent storage
+    const updatedMedia = [...media, newMedia]
+    await saveData({ media: updatedMedia, modalities })
+    
+    // Clear form
     setMediaTitle('')
     setMediaUrl('')
     setMediaDescription('')
-    toast.success('Mídia adicionada com sucesso!')
+    setMediaCategory('regular')
+    
+    // Show success message and redirect to site
+    toast.success('Mídia adicionada com sucesso! Redirecionando para visualizar...', {
+      duration: 2000
+    })
+    
+    // Redirect to site after short delay to show the gallery
+    setTimeout(() => {
+      onBack({ modalityId: selectedModality })
+    }, 2000)
   }
 
   const extractYouTubeId = (url: string): string => {
@@ -71,21 +98,22 @@ export function AdminPanel({ onBack, modalities }: AdminPanelProps) {
     return match?.[1] || ''
   }
 
-  const removeMedia = (mediaId: string) => {
-    setMedia((current) => current.filter(m => m.id !== mediaId))
+  const removeMedia = async (mediaId: string) => {
+    const updatedMedia = media.filter(m => m.id !== mediaId)
+    await saveData({ media: updatedMedia, modalities })
     toast.success('Mídia removida com sucesso!')
   }
 
   const getModalityMedia = (modalityId: string) => {
-    return media.filter(m => m.modalityId === modalityId)
+    return (media || []).filter(m => m.modalityId === modalityId)
   }
 
   return (
     <div className="min-h-screen bg-muted/30">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
-          <Button variant="outline" onClick={onBack} className="mb-4">
-            <ArrowLeft size={16} className="mr-2" />
+          <Button variant="outline" onClick={() => onBack()} className="mb-4">
+            <FaArrowLeft size={16} className="mr-2" />
             Voltar ao Site
           </Button>
           <h1 className="text-4xl font-black text-foreground">
@@ -94,6 +122,24 @@ export function AdminPanel({ onBack, modalities }: AdminPanelProps) {
           <p className="text-xl text-muted-foreground mt-2">
             Gerencie fotos e vídeos das modalidades da academia
           </p>
+          
+          {/* Important Notice */}
+          <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <div className="flex items-start gap-3">
+              <div className="text-yellow-600 mt-1">⚠️</div>
+              <div>
+                <h3 className="font-semibold text-yellow-800 mb-1">
+                  Importante: Armazenamento Local
+                </h3>
+                <p className="text-yellow-700 text-sm leading-relaxed">
+                  <strong>As fotos são salvas apenas neste navegador/dispositivo.</strong><br/>
+                  Para que apareçam em outros computadores ou celulares, seria necessário um banco de dados online (serviço pago).
+                  <br/>
+                  <em>Atualmente: Cada dispositivo mantém suas próprias fotos.</em>
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
@@ -101,7 +147,7 @@ export function AdminPanel({ onBack, modalities }: AdminPanelProps) {
           <Card className="xl:col-span-2">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Plus size={20} />
+                <FaPlus size={20} />
                 Adicionar Nova Mídia Profissional
               </CardTitle>
             </CardHeader>
@@ -132,14 +178,37 @@ export function AdminPanel({ onBack, modalities }: AdminPanelProps) {
                     <SelectContent>
                       <SelectItem value="image">
                         <div className="flex items-center gap-2">
-                          <ImageIcon size={16} />
+                          <FaImage size={16} />
                           Foto Profissional
                         </div>
                       </SelectItem>
                       <SelectItem value="video">
                         <div className="flex items-center gap-2">
-                          <Play size={16} />
+                          <FaPlay size={16} />
                           Vídeo de Treino
+                        </div>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="category">Categoria *</Label>
+                  <Select value={mediaCategory} onValueChange={(value: 'regular' | 'transformation') => setMediaCategory(value)}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="regular">
+                        <div className="flex items-center gap-2">
+                          <FaImage size={16} />
+                          Galeria Regular
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="transformation">
+                        <div className="flex items-center gap-2">
+                          <FaUsers size={16} />
+                          Faça como eles
                         </div>
                       </SelectItem>
                     </SelectContent>
@@ -171,12 +240,12 @@ export function AdminPanel({ onBack, modalities }: AdminPanelProps) {
               <Tabs value={uploadMethod} onValueChange={(value: 'url' | 'file') => setUploadMethod(value)}>
                 <TabsList className="grid w-full grid-cols-2">
                   <TabsTrigger value="url" className="flex items-center gap-2">
-                    <Link size={16} />
+                    <FaLink size={16} />
                     URL da Mídia
                   </TabsTrigger>
                   <TabsTrigger value="file" className="flex items-center gap-2">
-                    <File size={16} />
-                    Upload de Arquivo
+                    <FaFile size={16} />
+                    FaUpload de Arquivo
                   </TabsTrigger>
                 </TabsList>
                 
@@ -195,8 +264,8 @@ export function AdminPanel({ onBack, modalities }: AdminPanelProps) {
                     />
                     <p className="text-xs text-muted-foreground mt-1">
                       {mediaType === 'image' 
-                        ? "Cole o link direto da imagem (JPG, PNG, WebP)"
-                        : "URLs do YouTube, Vimeo ou link direto do vídeo"
+                        ? "Cole o FaLink direto da imagem (JPG, PNG, WebP)"
+                        : "URLs do YouTube, Vimeo ou FaLink direto do vídeo"
                       }
                     </p>
                   </div>
@@ -204,7 +273,7 @@ export function AdminPanel({ onBack, modalities }: AdminPanelProps) {
                 
                 <TabsContent value="file" className="space-y-4">
                   <div>
-                    <Label>Upload de {mediaType === 'image' ? 'Foto' : 'Vídeo'} *</Label>
+                    <Label>FaUpload de {mediaType === 'image' ? 'Foto' : 'Vídeo'} *</Label>
                     <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center">
                       <input
                         ref={fileInputRef}
@@ -217,7 +286,7 @@ export function AdminPanel({ onBack, modalities }: AdminPanelProps) {
                         className="hidden"
                       />
                       <div className="space-y-2">
-                        <Upload size={32} className="mx-auto text-muted-foreground" />
+                        <FaUpload size={32} className="mx-auto text-muted-foreground" />
                         <div>
                           <Button
                             type="button"
@@ -247,7 +316,7 @@ export function AdminPanel({ onBack, modalities }: AdminPanelProps) {
               </Tabs>
 
               <Button onClick={addMedia} className="w-full" size="lg">
-                <Save size={16} className="mr-2" />
+                <FaSave size={16} className="mr-2" />
                 Adicionar à Galeria
               </Button>
             </CardContent>
@@ -257,7 +326,7 @@ export function AdminPanel({ onBack, modalities }: AdminPanelProps) {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Upload size={20} />
+                <FaUpload size={20} />
                 Galeria por Modalidade
               </CardTitle>
             </CardHeader>
@@ -276,11 +345,11 @@ export function AdminPanel({ onBack, modalities }: AdminPanelProps) {
                         </h3>
                         <div className="flex gap-2 text-sm text-muted-foreground">
                           <span className="flex items-center gap-1">
-                            <ImageIcon size={14} />
+                            <FaImage size={14} />
                             {images.length} fotos
                           </span>
                           <span className="flex items-center gap-1">
-                            <Play size={14} />
+                            <FaPlay size={14} />
                             {videos.length} vídeos
                           </span>
                         </div>
@@ -288,7 +357,7 @@ export function AdminPanel({ onBack, modalities }: AdminPanelProps) {
                       
                       {modalityMedia.length === 0 ? (
                         <div className="text-center py-8 bg-muted/30 rounded-md">
-                          <ImageIcon size={32} className="mx-auto text-muted-foreground mb-2" />
+                          <FaImage size={32} className="mx-auto text-muted-foreground mb-2" />
                           <p className="text-muted-foreground">
                             Nenhuma mídia adicionada ainda
                           </p>
@@ -309,9 +378,9 @@ export function AdminPanel({ onBack, modalities }: AdminPanelProps) {
                                     item.type === 'image' ? 'bg-blue-100 text-blue-600' : 'bg-red-100 text-red-600'
                                   }`}>
                                     {item.type === 'image' ? (
-                                      <ImageIcon size={20} />
+                                      <FaImage size={20} />
                                     ) : (
-                                      <Play size={20} />
+                                      <FaPlay size={20} />
                                     )}
                                   </div>
                                 </div>
@@ -336,7 +405,7 @@ export function AdminPanel({ onBack, modalities }: AdminPanelProps) {
                                   onClick={() => removeMedia(item.id)}
                                   className="opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive hover:bg-destructive/10"
                                 >
-                                  <Trash2 size={14} />
+                                  <FaTrash size={14} />
                                 </Button>
                               </div>
                             </div>
@@ -361,7 +430,7 @@ export function AdminPanel({ onBack, modalities }: AdminPanelProps) {
               <div className="grid grid-cols-1 gap-6">
                 <div>
                   <h4 className="font-semibold mb-3 flex items-center gap-2">
-                    <ImageIcon size={18} className="text-blue-600" />
+                    <FaImage size={18} className="text-blue-600" />
                     Fotos Profissionais
                   </h4>
                   <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
@@ -374,7 +443,7 @@ export function AdminPanel({ onBack, modalities }: AdminPanelProps) {
                 </div>
                 <div>
                   <h4 className="font-semibold mb-3 flex items-center gap-2">
-                    <Play size={18} className="text-red-600" />
+                    <FaPlay size={18} className="text-red-600" />
                     Vídeos de Treino
                   </h4>
                   <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
@@ -387,8 +456,8 @@ export function AdminPanel({ onBack, modalities }: AdminPanelProps) {
                 </div>
                 <div>
                   <h4 className="font-semibold mb-3 flex items-center gap-2">
-                    <Upload size={18} className="text-green-600" />
-                    Dicas de Upload
+                    <FaUpload size={18} className="text-green-600" />
+                    Dicas de FaUpload
                   </h4>
                   <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
                     <li>Títulos descritivos e específicos</li>

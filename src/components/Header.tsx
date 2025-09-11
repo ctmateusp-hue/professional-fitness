@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button'
-import { Shield } from '@phosphor-icons/react'
+import { FaShieldAlt } from 'react-icons/fa'
 import { Logo } from './Logo'
 import { motion, useScroll, useTransform } from 'framer-motion'
 import { useEffect, useState } from 'react'
@@ -123,7 +123,7 @@ export function Header({ onAdminClick, isAdmin, onAdminLogin }: HeaderProps) {
                 onClick={handleAdminAccess}
                 className="hidden sm:flex items-center gap-2"
               >
-                <Shield size={16} />
+                <FaShieldAlt size={16} />
                 Admin
               </Button>
             </motion.div>
