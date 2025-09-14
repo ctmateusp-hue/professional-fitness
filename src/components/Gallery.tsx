@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge'
 import { FaTimes, FaPlay, FaImage, FaExternalLinkAlt, FaEye, FaChevronLeft, FaChevronRight } from 'react-icons/fa'
 import { useState, useEffect } from 'react'
 import { Modality, MediaItem } from '../App'
+import { SupabaseService } from '../lib/supabase'
 
 interface GalleryProps {
   modality: Modality
@@ -16,10 +17,44 @@ export function Gallery({ modality, media, onClose }: GalleryProps) {
   const [selectedMedia, setSelectedMedia] = useState<MediaItem | null>(null)
   const [currentIndex, setCurrentIndex] = useState(0)
   const [imageErrors, setImageErrors] = useState<Set<string>>(new Set())
+  const [supabaseMedia, setSupabaseMedia] = useState<MediaItem[]>([])
 
-  const hasMedia = media.length > 0
-  const images = media.filter(m => m.type === 'image')
-  const videos = media.filter(m => m.type === 'video')
+  // Load media from Supabase for this modality
+  useEffect(() => {
+    const loadSupabaseMedia = async () => {
+      try {
+        const mediaData = await SupabaseService.getMedia(modality.id, 'regular')
+        const converted = mediaData.map(item => ({
+          id: item.id,
+          modalityId: item.modality_id,
+          type: item.type,
+          url: item.url,
+          title: item.title,
+          description: item.description,
+          category: item.category as 'regular',
+          thumbnail: item.thumbnail
+        }))
+        setSupabaseMedia(converted)
+      } catch (error) {
+        console.warn('Error loading media from Supabase:', error)
+      }
+    }
+    
+    loadSupabaseMedia()
+  }, [modality.id])
+
+  // Combine local and Supabase media
+  const allAvailableMedia = [
+    ...supabaseMedia,
+    ...media.filter(local => 
+      local.modalityId === modality.id && 
+      !supabaseMedia.some(remote => remote.id === local.id)
+    )
+  ]
+
+  const hasMedia = allAvailableMedia.length > 0
+  const images = allAvailableMedia.filter(m => m.type === 'image')
+  const videos = allAvailableMedia.filter(m => m.type === 'video')
   const allMedia = [...images, ...videos]
 
   // Update current index when selectedMedia changes

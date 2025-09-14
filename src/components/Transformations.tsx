@@ -3,6 +3,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { FaTimes, FaImage, FaArrowLeft, FaArrowRight, FaEye } from 'react-icons/fa'
 import { useState, useEffect } from 'react'
 import { MediaItem } from '../App'
+import { SupabaseService } from '../lib/supabase'
 
 interface TransformationsProps {
   transformations: MediaItem[]
@@ -13,16 +14,49 @@ export function Transformations({ transformations, onClose }: TransformationsPro
   const [selectedTransformation, setSelectedTransformation] = useState<MediaItem | null>(null)
   const [currentIndex, setCurrentIndex] = useState(0)
   const [imageErrors, setImageErrors] = useState<Set<string>>(new Set())
+  const [supabaseTransformations, setSupabaseTransformations] = useState<MediaItem[]>([])
 
-  const hasTransformations = transformations.length > 0
+  // Load transformation media from Supabase
+  useEffect(() => {
+    const loadSupabaseTransformations = async () => {
+      try {
+        const media = await SupabaseService.getMedia(undefined, 'transformation')
+        const converted = media.map(item => ({
+          id: item.id,
+          modalityId: item.modality_id,
+          type: item.type,
+          url: item.url,
+          title: item.title,
+          description: item.description,
+          category: item.category as 'transformation',
+          thumbnail: item.thumbnail
+        }))
+        setSupabaseTransformations(converted)
+      } catch (error) {
+        console.warn('Error loading transformations from Supabase:', error)
+      }
+    }
+    
+    loadSupabaseTransformations()
+  }, [])
+
+  // Combine local and Supabase transformations
+  const allTransformations = [
+    ...supabaseTransformations,
+    ...transformations.filter(local => 
+      !supabaseTransformations.some(remote => remote.id === local.id)
+    )
+  ]
+
+  const hasTransformations = allTransformations.length > 0
 
   // Update current index when selectedTransformation changes
   useEffect(() => {
     if (selectedTransformation) {
-      const index = transformations.findIndex(item => item.id === selectedTransformation.id)
+      const index = allTransformations.findIndex(item => item.id === selectedTransformation.id)
       setCurrentIndex(index)
     }
-  }, [selectedTransformation, transformations])
+  }, [selectedTransformation, allTransformations])
 
   // Keyboard navigation
   useEffect(() => {
@@ -46,15 +80,15 @@ export function Transformations({ transformations, onClose }: TransformationsPro
   }, [selectedTransformation])
 
   const goToPrevious = () => {
-    if (transformations.length === 0) return
-    const newIndex = currentIndex > 0 ? currentIndex - 1 : transformations.length - 1
-    setSelectedTransformation(transformations[newIndex])
+    if (allTransformations.length === 0) return
+    const newIndex = currentIndex > 0 ? currentIndex - 1 : allTransformations.length - 1
+    setSelectedTransformation(allTransformations[newIndex])
   }
 
   const goToNext = () => {
-    if (transformations.length === 0) return
-    const newIndex = currentIndex < transformations.length - 1 ? currentIndex + 1 : 0
-    setSelectedTransformation(transformations[newIndex])
+    if (allTransformations.length === 0) return
+    const newIndex = currentIndex < allTransformations.length - 1 ? currentIndex + 1 : 0
+    setSelectedTransformation(allTransformations[newIndex])
   }
 
   const handleImageError = (mediaId: string) => {
@@ -80,7 +114,7 @@ export function Transformations({ transformations, onClose }: TransformationsPro
               <div className="flex gap-4">
                 <div className="text-sm bg-primary/10 text-primary px-3 py-1 rounded-full">
                   <FaImage size={14} className="mr-1 inline" />
-                  {transformations.length} transformações
+                  {allTransformations.length} transformações
                 </div>
               </div>
             )}
@@ -109,7 +143,7 @@ export function Transformations({ transformations, onClose }: TransformationsPro
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {transformations.map((item) => (
+            {allTransformations.map((item) => (
               <Card 
                 key={item.id}
                 className="group overflow-hidden cursor-pointer hover:shadow-lg transition-all duration-300 hover:scale-[1.02]"
@@ -169,7 +203,7 @@ export function Transformations({ transformations, onClose }: TransformationsPro
           </button>
 
           {/* Navigation buttons */}
-          {transformations.length > 1 && (
+          {allTransformations.length > 1 && (
             <>
               <button
                 onClick={goToPrevious}
@@ -187,10 +221,10 @@ export function Transformations({ transformations, onClose }: TransformationsPro
           )}
 
           {/* Media counter */}
-          {transformations.length > 1 && (
+          {allTransformations.length > 1 && (
             <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 bg-white/10 px-4 py-2 rounded-full">
               <span className="text-white text-sm font-medium">
-                {currentIndex + 1} de {transformations.length}
+                {currentIndex + 1} de {allTransformations.length}
               </span>
             </div>
           )}

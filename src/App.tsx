@@ -11,6 +11,7 @@ import { AdminPanel } from './components/AdminPanel'
 import { AdminLogin } from './components/AdminLogin'
 import { Toaster } from '@/components/ui/sonner'
 import { usePersistentStorage } from './lib/storage'
+import { SupabaseService } from './lib/supabase'
 import whatsappIcon from './assets/whatsapp.png'
 
 const WHATSAPP_LINK = "https://wa.me/5517988275111?text=Quero%20agendar%20uma%20aula%20experimental";
@@ -118,9 +119,54 @@ function App() {
     }
   }, [])
   
-  // Load data only once when app starts
+  // Load data only once when app starts and sync with Supabase
   useEffect(() => {
-    loadData()
+    const loadAndSyncData = async () => {
+      try {
+        // Load local data first
+        await loadData()
+        
+        // Then sync with Supabase
+        const [supabaseMedia, supabaseModalities] = await Promise.all([
+          SupabaseService.getMedia(),
+          SupabaseService.getModalities()
+        ])
+        
+        // Convert Supabase media format to App format
+        const convertedMedia = supabaseMedia.map(item => ({
+          id: item.id,
+          modalityId: item.modality_id,
+          type: item.type,
+          url: item.url,
+          title: item.title,
+          description: item.description,
+          category: item.category,
+          thumbnail: item.thumbnail
+        }))
+        
+        // Merge with existing data (Supabase takes priority)
+        const existingLocalMedia = data.media || []
+        const mergedMedia = [
+          ...convertedMedia,
+          ...existingLocalMedia.filter(local => 
+            !convertedMedia.some(remote => remote.id === local.id)
+          )
+        ]
+        
+        // Update with merged data
+        if (mergedMedia.length > existingLocalMedia.length) {
+          await saveData({ 
+            media: mergedMedia, 
+            modalities: supabaseModalities.length > 0 ? supabaseModalities : modalities 
+          })
+        }
+      } catch (error) {
+        console.warn('Error syncing with Supabase, using local data:', error)
+        await loadData()
+      }
+    }
+    
+    loadAndSyncData()
   }, [])
 
   const handleShowTransformations = () => {

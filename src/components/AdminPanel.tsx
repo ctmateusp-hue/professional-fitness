@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -11,6 +11,7 @@ import { Modality, MediaItem } from '../App'
 import { TransformationStoriesManager } from './TransformationStoriesManager'
 import { toast } from 'sonner'
 import { usePersistentStorage } from '../lib/storage'
+import { SupabaseService } from '@/lib/supabase'
 
 interface AdminPanelProps {
   modalities: Modality[]
@@ -54,36 +55,65 @@ export function AdminPanel({ modalities, media, onAddMedia, onDeleteMedia, onBac
     }
   }
 
-  const handleAddMedia = () => {
+  const handleAddMedia = async () => {
     if (!selectedModalityId || !mediaUrl || !mediaTitle) {
       toast.error('Preencha todos os campos obrigatórios')
       return
     }
 
-    const newMedia: MediaItem = {
-      id: Date.now().toString(),
-      modalityId: selectedModalityId,
-      type: mediaType,
-      url: mediaUrl,
-      title: mediaTitle,
-      description: mediaDescription
-    }
+    try {
+      // Save to Supabase
+      const mediaData = {
+        modality_id: selectedModalityId,
+        type: mediaType,
+        url: mediaUrl,
+        title: mediaTitle,
+        description: mediaDescription,
+        category: 'regular' as const
+      }
 
-    onAddMedia(newMedia)
-    
-    // Reset form
-    setMediaUrl('')
-    setMediaTitle('')
-    setMediaDescription('')
-    setSelectedModalityId('')
-    
-    toast.success('Mídia adicionada com sucesso!')
+      const savedMedia = await SupabaseService.addMedia(mediaData)
+      
+      // Also save to local storage for compatibility
+      const newMedia: MediaItem = {
+        id: savedMedia.id,
+        modalityId: selectedModalityId,
+        type: mediaType,
+        url: mediaUrl,
+        title: mediaTitle,
+        description: mediaDescription,
+        category: 'regular'
+      }
+
+      onAddMedia(newMedia)
+      
+      // Reset form
+      setMediaUrl('')
+      setMediaTitle('')
+      setMediaDescription('')
+      setSelectedModalityId('')
+      
+      toast.success('Mídia salva permanentemente! Agora é visível para todos.')
+    } catch (error) {
+      console.error('Error saving media:', error)
+      toast.error('Erro ao salvar mídia. Tente novamente.')
+    }
   }
 
-  const handleDeleteMedia = (id: string) => {
+  const handleDeleteMedia = async (id: string) => {
     if (confirm('Tem certeza que deseja excluir esta mídia?')) {
-      onDeleteMedia(id)
-      toast.success('Mídia excluída com sucesso!')
+      try {
+        // Delete from Supabase
+        await SupabaseService.deleteMedia(id)
+        
+        // Also delete from local storage
+        onDeleteMedia(id)
+        
+        toast.success('Mídia excluída permanentemente!')
+      } catch (error) {
+        console.error('Error deleting media:', error)
+        toast.error('Erro ao excluir mídia. Tente novamente.')
+      }
     }
   }
 
