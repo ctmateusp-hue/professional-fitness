@@ -3,7 +3,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { Badge } from '@/components/ui/badge'
 import { FaTimes, FaPlay, FaImage, FaExternalLinkAlt, FaEye, FaChevronLeft, FaChevronRight } from 'react-icons/fa'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Modality, MediaItem } from '../App'
 import { SupabaseService } from '../lib/supabase'
 
@@ -18,12 +18,22 @@ export function Gallery({ modality, media, onClose }: GalleryProps) {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [imageErrors, setImageErrors] = useState<Set<string>>(new Set())
   const [supabaseMedia, setSupabaseMedia] = useState<MediaItem[]>([])
+  const [isLoadingMedia, setIsLoadingMedia] = useState(false)
 
-  // Load media from Supabase for this modality
+  // Optimized media loading with cache
   useEffect(() => {
+    let isMounted = true
+
     const loadSupabaseMedia = async () => {
+      // Only load if we don't have data for this modality
+      if (supabaseMedia.length > 0) return
+
+      setIsLoadingMedia(true)
       try {
         const mediaData = await SupabaseService.getMedia(modality.id, 'regular')
+        
+        if (!isMounted) return
+
         const converted = mediaData.map(item => ({
           id: item.id,
           modalityId: item.modality_id,
@@ -34,28 +44,37 @@ export function Gallery({ modality, media, onClose }: GalleryProps) {
           category: item.category as 'regular',
           thumbnail: item.thumbnail
         }))
+        
         setSupabaseMedia(converted)
       } catch (error) {
         console.warn('Error loading media from Supabase:', error)
+      } finally {
+        if (isMounted) {
+          setIsLoadingMedia(false)
+        }
       }
     }
     
     loadSupabaseMedia()
-  }, [modality.id])
 
-  // Combine local and Supabase media
-  const allAvailableMedia = [
+    return () => {
+      isMounted = false
+    }
+  }, [modality.id]) // Only re-run when modality changes
+
+  // Memoized media filtering for better performance
+  const allAvailableMedia = useMemo(() => [
     ...supabaseMedia,
     ...media.filter(local => 
       local.modalityId === modality.id && 
       !supabaseMedia.some(remote => remote.id === local.id)
     )
-  ]
+  ], [supabaseMedia, media, modality.id])
 
   const hasMedia = allAvailableMedia.length > 0
-  const images = allAvailableMedia.filter(m => m.type === 'image')
-  const videos = allAvailableMedia.filter(m => m.type === 'video')
-  const allMedia = [...images, ...videos]
+  const images = useMemo(() => allAvailableMedia.filter(m => m.type === 'image'), [allAvailableMedia])
+  const videos = useMemo(() => allAvailableMedia.filter(m => m.type === 'video'), [allAvailableMedia])
+  const allMedia = useMemo(() => [...images, ...videos], [images, videos])
 
   // Update current index when selectedMedia changes
   useEffect(() => {
@@ -157,7 +176,12 @@ export function Gallery({ modality, media, onClose }: GalleryProps) {
           </Button>
         </div>
         
-        {!hasMedia ? (
+        {isLoadingMedia ? (
+          <div className="text-center py-20">
+            <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Carregando galeria...</p>
+          </div>
+        ) : !hasMedia ? (
           <div className="text-center py-20">
             <div className="w-24 h-24 bg-muted rounded-full flex items-center justify-center mx-auto mb-6">
               <FaImage size={32} className="text-muted-foreground" />

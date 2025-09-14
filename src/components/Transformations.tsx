@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { FaTimes, FaImage, FaArrowLeft, FaArrowRight, FaEye } from 'react-icons/fa'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { MediaItem } from '../App'
 import { SupabaseService } from '../lib/supabase'
 
@@ -15,12 +15,22 @@ export function Transformations({ transformations, onClose }: TransformationsPro
   const [currentIndex, setCurrentIndex] = useState(0)
   const [imageErrors, setImageErrors] = useState<Set<string>>(new Set())
   const [supabaseTransformations, setSupabaseTransformations] = useState<MediaItem[]>([])
+  const [isLoadingTransformations, setIsLoadingTransformations] = useState(false)
 
-  // Load transformation media from Supabase
+  // Optimized transformations loading
   useEffect(() => {
+    let isMounted = true
+
     const loadSupabaseTransformations = async () => {
+      // Only load once
+      if (supabaseTransformations.length > 0) return
+
+      setIsLoadingTransformations(true)
       try {
         const media = await SupabaseService.getMedia(undefined, 'transformation')
+        
+        if (!isMounted) return
+
         const converted = media.map(item => ({
           id: item.id,
           modalityId: item.modality_id,
@@ -31,22 +41,31 @@ export function Transformations({ transformations, onClose }: TransformationsPro
           category: item.category as 'transformation',
           thumbnail: item.thumbnail
         }))
+        
         setSupabaseTransformations(converted)
       } catch (error) {
         console.warn('Error loading transformations from Supabase:', error)
+      } finally {
+        if (isMounted) {
+          setIsLoadingTransformations(false)
+        }
       }
     }
     
     loadSupabaseTransformations()
-  }, [])
 
-  // Combine local and Supabase transformations
-  const allTransformations = [
+    return () => {
+      isMounted = false
+    }
+  }, []) // Only run once
+
+  // Memoized transformations for better performance
+  const allTransformations = useMemo(() => [
     ...supabaseTransformations,
     ...transformations.filter(local => 
       !supabaseTransformations.some(remote => remote.id === local.id)
     )
-  ]
+  ], [supabaseTransformations, transformations])
 
   const hasTransformations = allTransformations.length > 0
 
@@ -125,7 +144,12 @@ export function Transformations({ transformations, onClose }: TransformationsPro
           </Button>
         </div>
         
-        {!hasTransformations ? (
+        {isLoadingTransformations ? (
+          <div className="text-center py-20">
+            <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Carregando transformações...</p>
+          </div>
+        ) : !hasTransformations ? (
           <div className="text-center py-20">
             <div className="w-24 h-24 bg-muted rounded-full flex items-center justify-center mx-auto mb-6">
               <FaImage size={32} className="text-muted-foreground" />

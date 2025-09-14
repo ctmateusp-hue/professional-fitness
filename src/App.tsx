@@ -119,54 +119,18 @@ function App() {
     }
   }, [])
   
-  // Load data only once when app starts and sync with Supabase
+  // Simplified data loading - only load local data, sync in background
   useEffect(() => {
-    const loadAndSyncData = async () => {
+    const simpleLoadData = async () => {
       try {
-        // Load local data first
+        // Fast load from localStorage only
         await loadData()
-        
-        // Then sync with Supabase
-        const [supabaseMedia, supabaseModalities] = await Promise.all([
-          SupabaseService.getMedia(),
-          SupabaseService.getModalities()
-        ])
-        
-        // Convert Supabase media format to App format
-        const convertedMedia = supabaseMedia.map(item => ({
-          id: item.id,
-          modalityId: item.modality_id,
-          type: item.type,
-          url: item.url,
-          title: item.title,
-          description: item.description,
-          category: item.category,
-          thumbnail: item.thumbnail
-        }))
-        
-        // Merge with existing data (Supabase takes priority)
-        const existingLocalMedia = data.media || []
-        const mergedMedia = [
-          ...convertedMedia,
-          ...existingLocalMedia.filter(local => 
-            !convertedMedia.some(remote => remote.id === local.id)
-          )
-        ]
-        
-        // Update with merged data
-        if (mergedMedia.length > existingLocalMedia.length) {
-          await saveData({ 
-            media: mergedMedia, 
-            modalities: supabaseModalities.length > 0 ? supabaseModalities : modalities 
-          })
-        }
       } catch (error) {
-        console.warn('Error syncing with Supabase, using local data:', error)
-        await loadData()
+        console.error('Error loading data:', error)
       }
     }
     
-    loadAndSyncData()
+    simpleLoadData()
   }, [])
 
   const handleShowTransformations = () => {
