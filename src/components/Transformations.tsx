@@ -3,7 +3,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { FaTimes, FaImage, FaArrowLeft, FaArrowRight, FaEye } from 'react-icons/fa'
 import { useState, useEffect, useMemo } from 'react'
 import { MediaItem } from '../App'
-import { SupabaseService } from '../lib/supabase'
+import { SupabaseService, TransformationStory, TransformationMedia } from '../lib/supabase'
 
 interface TransformationsProps {
   transformations: MediaItem[]
@@ -11,10 +11,13 @@ interface TransformationsProps {
 }
 
 export function Transformations({ transformations, onClose }: TransformationsProps) {
+  console.log('🚀 Transformations component initialized with props:', { transformations: transformations.length })
+  
   const [selectedTransformation, setSelectedTransformation] = useState<MediaItem | null>(null)
   const [currentIndex, setCurrentIndex] = useState(0)
   const [imageErrors, setImageErrors] = useState<Set<string>>(new Set())
   const [supabaseTransformations, setSupabaseTransformations] = useState<MediaItem[]>([])
+  const [transformationStories, setTransformationStories] = useState<MediaItem[]>([])
   const [isLoadingTransformations, setIsLoadingTransformations] = useState(false)
 
   // Optimized transformations loading
@@ -23,16 +26,24 @@ export function Transformations({ transformations, onClose }: TransformationsPro
 
     const loadSupabaseTransformations = async () => {
       // Only load once
-      if (supabaseTransformations.length > 0) return
+      if (supabaseTransformations.length > 0 && transformationStories.length > 0) return
 
       setIsLoadingTransformations(true)
       try {
+        console.log('🔄 Loading transformations from Supabase...')
+        
+        // Load old media table transformations
         const media = await SupabaseService.getMedia(undefined, 'transformation')
+        console.log('📊 Old media transformations:', media)
+        
+        // Load new transformation stories
+        const stories = await SupabaseService.getTransformationStories()
+        console.log('📚 Transformation stories:', stories)
         
         if (!isMounted) return
 
-        // Convert Supabase format to App format
-        const converted = media.map(item => ({
+        // Convert old media format to App format
+        const convertedMedia = media.map(item => ({
           id: item.id,
           modalityId: item.modality_slug, // Convert slug back to modalityId for compatibility
           type: item.type,
@@ -42,9 +53,41 @@ export function Transformations({ transformations, onClose }: TransformationsPro
           category: item.category as 'transformation',
           thumbnail: item.thumbnail
         }))
+
+        // Convert transformation stories to MediaItem format
+        const convertedStories: MediaItem[] = []
+        console.log(`🔄 Processing ${stories.length} transformation stories...`)
         
-        console.log('✅ Transformations loaded:', converted)
-        setSupabaseTransformations(converted)
+        for (const story of stories) {
+          console.log(`📖 Processing story: ${story.title} (${story.id})`)
+          
+          // Get media for this story
+          const storyMedia = await SupabaseService.getTransformationMedia(story.id)
+          console.log(`🖼️ Found ${storyMedia.length} media items for story ${story.id}:`, storyMedia)
+          
+          // Convert each media item to MediaItem format
+          for (const mediaItem of storyMedia) {
+            const convertedItem = {
+              id: `story-${story.id}-${mediaItem.id}`,
+              modalityId: 'antes-depois', // Use a specific modality for transformation stories
+              type: mediaItem.type,
+              url: mediaItem.url,
+              title: `${story.title} - ${mediaItem.media_category}`,
+              description: story.description,
+              category: 'transformation' as const,
+              thumbnail: mediaItem.thumbnail
+            }
+            console.log(`✅ Converted media item:`, convertedItem)
+            convertedStories.push(convertedItem)
+          }
+        }
+        
+        console.log('✅ Old transformations loaded:', convertedMedia)
+        console.log('✅ Transformation stories loaded:', convertedStories)
+        console.log('🎯 TOTAL TRANSFORMATIONS FOUND:', convertedMedia.length + convertedStories.length)
+        
+        setSupabaseTransformations(convertedMedia)
+        setTransformationStories(convertedStories)
       } catch (error) {
         console.warn('Error loading transformations from Supabase:', error)
       } finally {
@@ -62,12 +105,33 @@ export function Transformations({ transformations, onClose }: TransformationsPro
   }, []) // Only run once
 
   // Memoized transformations for better performance
-  const allTransformations = useMemo(() => [
-    ...supabaseTransformations,
-    ...transformations.filter(local => 
-      !supabaseTransformations.some(remote => remote.id === local.id)
-    )
-  ], [supabaseTransformations, transformations])
+  const allTransformations = useMemo(() => {
+    const combined = [
+      ...supabaseTransformations,
+      ...transformationStories,
+      ...transformations.filter(local => 
+        !supabaseTransformations.some(remote => remote.id === local.id) &&
+        !transformationStories.some(story => story.id === local.id)
+      )
+    ]
+    
+    // Add test data if no real data exists
+    if (combined.length === 0) {
+      console.log('⚠️ No transformation data found, adding test data for debugging')
+      return [{
+        id: 'test-transformation-1',
+        modalityId: 'antes-depois',
+        type: 'image' as const,
+        url: 'https://via.placeholder.com/800x600/0000ff/ffffff?text=TESTE+ANTES+E+DEPOIS',
+        title: 'Transformação Teste - João',
+        description: 'Esta é uma transformação de teste para verificar se o sistema está funcionando',
+        category: 'transformation' as const,
+        thumbnail: undefined
+      }]
+    }
+    
+    return combined
+  }, [supabaseTransformations, transformationStories, transformations])
 
   const hasTransformations = allTransformations.length > 0
 
@@ -119,6 +183,15 @@ export function Transformations({ transformations, onClose }: TransformationsPro
   const handleTransformationClick = (item: MediaItem) => {
     setSelectedTransformation(item)
   }
+
+  // Debug log before rendering
+  console.log('🎨 RENDERING Transformations component:', {
+    supabaseTransformations: supabaseTransformations.length,
+    transformationStories: transformationStories.length,
+    allTransformations: allTransformations.length,
+    hasTransformations,
+    isLoadingTransformations
+  })
 
   return (
     <section className="py-20 bg-background min-h-screen">

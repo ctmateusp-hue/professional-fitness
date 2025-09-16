@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Inserir Dados de Teste - Transformações</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <h1>Teste de Inserção - Transformações</h1>
+    <button onclick="insertTestData()">🚀 Inserir Dados de Teste</button>
+    <button onclick="checkData()">📊 Verificar Dados</button>
+    <button onclick="clearData()">🗑️ Limpar Dados de Teste</button>
+    
+    <div id="status"></div>
+    <div id="results"></div>
+
+    <script>
+        // Configuração do Supabase (substitua pelas suas credenciais)
+        const supabaseUrl = 'https://pzdkhnuqhrtanmfkktgb.supabase.co'
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB6ZGtobnVxaHJ0YW5tZmtrdGdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzg1MTg0NzMsImV4cCI6MjA1NDA5NDQ3M30.0a7S5Rqb8ZW7P7YCYlTZH-aEBsQQtKpGwI9wKLWqlYs'
+        
+        const supabase = supabase.createClient(supabaseUrl, supabaseKey)
+        
+        async function insertTestData() {
+            const status = document.getElementById('status')
+            const results = document.getElementById('results')
+            
+            status.innerHTML = '<p>🔄 Inserindo dados de teste...</p>'
+            
+            try {
+                // 1. Criar história de transformação
+                console.log('📝 Criando história...')
+                const { data: story, error: storyError } = await supabase
+                    .from('transformation_stories')
+                    .insert({
+                        id: 'test-story-001',
+                        title: 'Transformação João Silva',
+                        student_name: 'João Silva',
+                        description: 'História incrível de transformação de 6 meses com resultados surpreendentes',
+                        before_description: 'João estava com sobrepeso e sedentário, pesando 95kg.',
+                        after_description: 'Após 6 meses de treino, João chegou aos 78kg e ganhou massa muscular.',
+                        transformation_period: '6 meses',
+                        featured: true,
+                        sort_order: 1
+                    })
+                    .select()
+                    .single()
+                
+                if (storyError) {
+                    console.error('Erro ao criar história:', storyError)
+                    status.innerHTML = `<p style="color: red">❌ Erro ao criar história: ${storyError.message}</p>`
+                    return
+                }
+                
+                console.log('✅ História criada:', story)
+                
+                // 2. Criar mídias para a história
+                console.log('🖼️ Criando mídias...')
+                const mediaItems = [
+                    {
+                        id: 'media-before-001',
+                        story_id: 'test-story-001',
+                        type: 'image',
+                        url: 'https://via.placeholder.com/400x600/ff0000/ffffff?text=ANTES',
+                        media_category: 'before',
+                        title: 'Foto Antes',
+                        description: 'Foto antes da transformação',
+                        sort_order: 1
+                    },
+                    {
+                        id: 'media-after-001',
+                        story_id: 'test-story-001',
+                        type: 'image',
+                        url: 'https://via.placeholder.com/400x600/00ff00/ffffff?text=DEPOIS',
+                        media_category: 'after',
+                        title: 'Foto Depois',
+                        description: 'Foto depois da transformação',
+                        sort_order: 2
+                    },
+                    {
+                        id: 'media-before-after-001',
+                        story_id: 'test-story-001',
+                        type: 'image',
+                        url: 'https://via.placeholder.com/800x600/0000ff/ffffff?text=ANTES+E+DEPOIS',
+                        media_category: 'before_after',
+                        title: 'Comparação Antes e Depois',
+                        description: 'Foto comparativa antes e depois',
+                        sort_order: 3
+                    }
+                ]
+                
+                const { data: media, error: mediaError } = await supabase
+                    .from('transformation_media')
+                    .insert(mediaItems)
+                    .select()
+                
+                if (mediaError) {
+                    console.error('Erro ao criar mídia:', mediaError)
+                    status.innerHTML = `<p style="color: red">❌ Erro ao criar mídia: ${mediaError.message}</p>`
+                    return
+                }
+                
+                console.log('✅ Mídias criadas:', media)
+                
+                status.innerHTML = '<p style="color: green">✅ Dados de teste inseridos com sucesso!</p>'
+                results.innerHTML = `
+                    <h3>Dados Inseridos:</h3>
+                    <p><strong>História:</strong> ${story.title}</p>
+                    <p><strong>Mídias:</strong> ${media.length} itens criados</p>
+                    <p><em>Agora navegue para <a href="http://localhost:5000/#transformations" target="_blank">http://localhost:5000/#transformations</a> para ver o resultado!</em></p>
+                `
+                
+            } catch (error) {
+                console.error('Erro geral:', error)
+                status.innerHTML = `<p style="color: red">❌ Erro geral: ${error.message}</p>`
+            }
+        }
+        
+        async function checkData() {
+            const results = document.getElementById('results')
+            
+            try {
+                // Verificar histórias
+                const { data: stories, error: storiesError } = await supabase
+                    .from('transformation_stories')
+                    .select('*')
+                
+                // Verificar mídias
+                const { data: media, error: mediaError } = await supabase
+                    .from('transformation_media')
+                    .select('*')
+                
+                results.innerHTML = `
+                    <h3>Dados Atuais:</h3>
+                    <p><strong>Histórias:</strong> ${stories?.length || 0}</p>
+                    <p><strong>Mídias:</strong> ${media?.length || 0}</p>
+                    <pre>${JSON.stringify({stories, media}, null, 2)}</pre>
+                `
+                
+            } catch (error) {
+                results.innerHTML = `<p style="color: red">❌ Erro ao verificar dados: ${error.message}</p>`
+            }
+        }
+        
+        async function clearData() {
+            const status = document.getElementById('status')
+            
+            if (!confirm('Tem certeza que deseja limpar os dados de teste?')) {
+                return
+            }
+            
+            try {
+                // Limpar mídias primeiro (por causa da foreign key)
+                await supabase
+                    .from('transformation_media')
+                    .delete()
+                    .eq('story_id', 'test-story-001')
+                
+                // Limpar história
+                await supabase
+                    .from('transformation_stories')
+                    .delete()
+                    .eq('id', 'test-story-001')
+                
+                status.innerHTML = '<p style="color: green">✅ Dados de teste removidos!</p>'
+                
+            } catch (error) {
+                status.innerHTML = `<p style="color: red">❌ Erro ao limpar dados: ${error.message}</p>`
+            }
+        }
+    </script>
+</body>
+</html>

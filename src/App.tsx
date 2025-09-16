@@ -79,7 +79,7 @@ function App() {
 
   const selectedModality = modalities?.find(m => m.id === selectedModalityId)
   
-  // Filter transformations from media
+  // Filter transformations from media (old system) and also load transformation stories (new system)
   const transformations = media?.filter(item => item.category === 'transformation') || []
   const regularMedia = media?.filter(item => item.category !== 'transformation') || []
   
@@ -208,6 +208,8 @@ function App() {
   }
 
   if (currentView === 'transformations') {
+    console.log('📊 App.tsx - Passing transformations to component:', transformations.length, transformations)
+    
     return (
       <div className="min-h-screen bg-background">
         <Transformations 
