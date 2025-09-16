@@ -256,6 +256,8 @@ export class SupabaseService {
   }
 
   static async createTransformationMedia(media: Omit<TransformationMedia, 'id' | 'created_at' | 'updated_at'>) {
+    console.log('🔄 SupabaseService: Criando transformation media:', media)
+    
     const { data, error } = await supabase
       .from('transformation_media')
       .insert([media])
@@ -263,10 +265,17 @@ export class SupabaseService {
       .single()
     
     if (error) {
-      console.error('Error creating transformation media:', error)
+      console.error('❌ Supabase Error Details:', {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code,
+        mediaData: media
+      })
       throw error
     }
     
+    console.log('✅ Media criada com sucesso:', data)
     return data
   }
 

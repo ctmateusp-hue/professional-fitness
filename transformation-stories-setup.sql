@@ -51,6 +51,8 @@ DROP POLICY IF EXISTS "Allow authenticated users to delete transformation_storie
 DROP POLICY IF EXISTS "Allow authenticated users to insert transformation_media" ON transformation_media;
 DROP POLICY IF EXISTS "Allow authenticated users to update transformation_media" ON transformation_media;
 DROP POLICY IF EXISTS "Allow authenticated users to delete transformation_media" ON transformation_media;
+DROP POLICY IF EXISTS "Allow all operations on transformation_stories" ON transformation_stories;
+DROP POLICY IF EXISTS "Allow all operations on transformation_media" ON transformation_media;
 
 -- 6. Criar políticas para leitura pública
 CREATE POLICY "Allow public read access on transformation_stories" ON transformation_stories
@@ -59,24 +61,13 @@ CREATE POLICY "Allow public read access on transformation_stories" ON transforma
 CREATE POLICY "Allow public read access on transformation_media" ON transformation_media
   FOR SELECT USING (true);
 
--- 7. Criar políticas para usuários autenticados (admin)
-CREATE POLICY "Allow authenticated users to insert transformation_stories" ON transformation_stories
-  FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+-- 7. Criar políticas para operações admin (sem autenticação Supabase)
+-- Como usamos autenticação local, permitimos todas as operações
+CREATE POLICY "Allow all operations on transformation_stories" ON transformation_stories
+  FOR ALL USING (true) WITH CHECK (true);
 
-CREATE POLICY "Allow authenticated users to update transformation_stories" ON transformation_stories
-  FOR UPDATE USING (auth.role() = 'authenticated');
-
-CREATE POLICY "Allow authenticated users to delete transformation_stories" ON transformation_stories
-  FOR DELETE USING (auth.role() = 'authenticated');
-
-CREATE POLICY "Allow authenticated users to insert transformation_media" ON transformation_media
-  FOR INSERT WITH CHECK (auth.role() = 'authenticated');
-
-CREATE POLICY "Allow authenticated users to update transformation_media" ON transformation_media
-  FOR UPDATE USING (auth.role() = 'authenticated');
-
-CREATE POLICY "Allow authenticated users to delete transformation_media" ON transformation_media
-  FOR DELETE USING (auth.role() = 'authenticated');
+CREATE POLICY "Allow all operations on transformation_media" ON transformation_media
+  FOR ALL USING (true) WITH CHECK (true);
 
 -- 8. Função para atualizar updated_at automaticamente
 CREATE OR REPLACE FUNCTION update_transformation_updated_at_column()

@@ -229,11 +229,28 @@ export function TransformationStoriesManager() {
       console.error('❌ Erro ao adicionar mídia:', error)
       
       // Log detalhado do erro
-      if (error instanceof Error) {
-        console.error('Error message:', error.message)
-        toast.error(`Erro ao adicionar mídia: ${error.message}`)
+      if (error && typeof error === 'object') {
+        console.error('Error details:', {
+          message: error.message || 'No message',
+          details: error.details || 'No details',
+          hint: error.hint || 'No hint',
+          code: error.code || 'No code',
+          stack: error.stack || 'No stack',
+          fullError: JSON.stringify(error, null, 2)
+        })
+        
+        // Mostrar mensagem específica baseada no tipo de erro
+        if (error.message) {
+          toast.error(`Erro: ${error.message}`)
+        } else if (error.details) {
+          toast.error(`Erro: ${error.details}`)
+        } else {
+          toast.error(`Erro desconhecido: ${JSON.stringify(error)}`)
+        }
       } else {
-        toast.error('Erro desconhecido ao adicionar mídia')
+        console.error('Error type:', typeof error)
+        console.error('Error string:', String(error))
+        toast.error(`Erro: ${String(error)}`)
       }
     }
   }
