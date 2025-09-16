@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { FaPlus, FaTrash, FaSave, FaImage, FaPlay, FaStar, FaUser } from 'react-icons/fa'
+import { FaPlus, FaTrash, FaSave, FaImage, FaPlay, FaStar, FaUser, FaUpload, FaLink } from 'react-icons/fa'
 import { SupabaseService, TransformationStory, TransformationMedia } from '../lib/supabase'
 import { toast } from 'sonner'
 
@@ -24,7 +24,7 @@ export function TransformationStoriesManager() {
   })
   const [mediaData, setMediaData] = useState({
     type: 'image' as 'image' | 'video',
-    media_category: 'before' as 'before' | 'after' | 'during' | 'video_testimonial',
+    media_category: 'before' as 'before' | 'after' | 'before_after' | 'during' | 'video_testimonial',
     url: '',
     title: '',
     description: '',
@@ -33,6 +33,11 @@ export function TransformationStoriesManager() {
   })
   const [storyMedia, setStoryMedia] = useState<TransformationMedia[]>([])
   const [isEditingStory, setIsEditingStory] = useState(false)
+  
+  // Upload states
+  const [uploadMethod, setUploadMethod] = useState<'url' | 'file'>('url')
+  const [isUploading, setIsUploading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState('')
 
   useEffect(() => {
     loadStories()
@@ -123,6 +128,74 @@ export function TransformationStoriesManager() {
     }
   }
 
+  const handleFileUpload = async (file: File) => {
+    try {
+      setIsUploading(true)
+      setUploadProgress('Verificando arquivo...')
+
+      // Log file details
+      console.log('📁 Upload details:', {
+        fileName: file.name,
+        fileType: file.type,
+        sizeInMB: (file.size / (1024 * 1024)).toFixed(2) + ' MB'
+      })
+
+      // Check file size limits
+      const maxImageSize = 10 * 1024 * 1024 // 10MB for images
+      const maxVideoSize = 100 * 1024 * 1024 // 100MB for videos
+      
+      if (mediaData.type === 'image' && file.size > maxImageSize) {
+        toast.error('Imagem muito grande! Máximo 10MB permitido.')
+        return
+      }
+      
+      if (mediaData.type === 'video' && file.size > maxVideoSize) {
+        toast.error('Vídeo muito grande! Máximo 100MB permitido.')
+        return
+      }
+
+      // For videos, use URL instead of base64 to avoid timeout
+      if (mediaData.type === 'video') {
+        // Create a local URL for preview (temporary)
+        const videoUrl = URL.createObjectURL(file)
+        setMediaData({ ...mediaData, url: videoUrl })
+        
+        // Auto-fill title with filename if empty
+        if (!mediaData.title) {
+          setMediaData(prev => ({ ...prev, title: file.name.replace(/\.[^/.]+$/, "") }))
+        }
+        
+        toast.success(`Vídeo ${file.name} carregado com sucesso!`)
+        toast.info('⚠️ Para vídeos, recomendamos usar URL externa para melhor performance')
+        return
+      }
+
+      // For images, convert to base64
+      setUploadProgress('Processando imagem...')
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        const base64Url = e.target?.result as string
+        setMediaData({ ...mediaData, url: base64Url })
+        
+        // Auto-fill title with filename if empty
+        if (!mediaData.title) {
+          setMediaData(prev => ({ ...prev, title: file.name.replace(/\.[^/.]+$/, "") }))
+        }
+        
+        setUploadProgress('')
+        toast.success(`Imagem ${file.name} carregada com sucesso!`)
+      }
+      reader.readAsDataURL(file)
+
+    } catch (error) {
+      console.error('❌ Erro no upload:', error)
+      toast.error('Erro ao fazer upload do arquivo')
+    } finally {
+      setIsUploading(false)
+      setUploadProgress('')
+    }
+  }
+
   const handleAddMedia = async () => {
     if (!selectedStory || !mediaData.url) return
     
@@ -177,12 +250,16 @@ export function TransformationStoriesManager() {
       thumbnail: '',
       sort_order: 0
     })
+    setUploadMethod('url')
+    setUploadProgress('')
+    setIsUploading(false)
   }
 
   const getCategoryLabel = (category: string) => {
     const labels = {
       before: 'Antes',
       after: 'Depois',
+      before_after: 'Antes e Depois',
       during: 'Durante',
       video_testimonial: 'Vídeo Depoimento'
     }
@@ -395,7 +472,7 @@ export function TransformationStoriesManager() {
                 <Label htmlFor="media_category">Categoria</Label>
                 <Select 
                   value={mediaData.media_category} 
-                  onValueChange={(value: 'before' | 'after' | 'during' | 'video_testimonial') => 
+                  onValueChange={(value: 'before' | 'after' | 'before_after' | 'during' | 'video_testimonial') => 
                     setMediaData({ ...mediaData, media_category: value })
                   }
                 >
@@ -405,20 +482,90 @@ export function TransformationStoriesManager() {
                   <SelectContent>
                     <SelectItem value="before">Antes</SelectItem>
                     <SelectItem value="after">Depois</SelectItem>
+                    <SelectItem value="before_after">Antes e Depois</SelectItem>
                     <SelectItem value="during">Durante</SelectItem>
                     <SelectItem value="video_testimonial">Vídeo Depoimento</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
+              
+              {/* Upload Method Selection */}
               <div>
-                <Label htmlFor="media_url">URL</Label>
-                <Input
-                  id="media_url"
-                  value={mediaData.url}
-                  onChange={(e) => setMediaData({ ...mediaData, url: e.target.value })}
-                  placeholder="URL da imagem/vídeo"
-                />
+                <Label>Método de Upload</Label>
+                <div className="flex gap-2 mt-2">
+                  <Button
+                    type="button"
+                    variant={uploadMethod === 'url' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setUploadMethod('url')}
+                    className="flex-1"
+                  >
+                    <FaLink size={14} className="mr-2" />
+                    URL
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={uploadMethod === 'file' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setUploadMethod('file')}
+                    className="flex-1"
+                  >
+                    <FaUpload size={14} className="mr-2" />
+                    Upload
+                  </Button>
+                </div>
               </div>
+
+              {/* URL Input */}
+              {uploadMethod === 'url' && (
+                <div>
+                  <Label htmlFor="media_url">URL</Label>
+                  <Input
+                    id="media_url"
+                    value={mediaData.url}
+                    onChange={(e) => setMediaData({ ...mediaData, url: e.target.value })}
+                    placeholder="URL da imagem/vídeo"
+                  />
+                </div>
+              )}
+
+              {/* File Upload */}
+              {uploadMethod === 'file' && (
+                <div>
+                  <Label htmlFor="media_file">Selecionar Arquivo</Label>
+                  <div className="mt-2">
+                    <Input
+                      id="media_file"
+                      type="file"
+                      accept={mediaData.type === 'image' ? 'image/*' : 'video/*'}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0]
+                        if (file) {
+                          handleFileUpload(file)
+                        }
+                      }}
+                      disabled={isUploading}
+                      className="cursor-pointer"
+                    />
+                    {isUploading && (
+                      <div className="mt-2 text-sm text-muted-foreground">
+                        {uploadProgress || 'Processando...'}
+                      </div>
+                    )}
+                    {mediaData.type === 'video' && (
+                      <p className="mt-2 text-xs text-muted-foreground">
+                        ⚠️ Máximo 100MB. Para vídeos grandes, recomendamos usar URL externa (YouTube, Vimeo, etc.)
+                      </p>
+                    )}
+                    {mediaData.type === 'image' && (
+                      <p className="mt-2 text-xs text-muted-foreground">
+                        📸 Máximo 10MB. Formatos: JPG, PNG, WebP, GIF
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+
               <div>
                 <Label htmlFor="media_title">Título</Label>
                 <Input

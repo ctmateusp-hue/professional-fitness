@@ -18,7 +18,7 @@ export interface TransformationMedia {
   id: string
   story_id: string
   type: 'image' | 'video'
-  media_category: 'before' | 'after' | 'during' | 'video_testimonial'
+  media_category: 'before' | 'after' | 'before_after' | 'during' | 'video_testimonial'
   url: string
   title?: string
   description?: string

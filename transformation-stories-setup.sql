@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS transformation_media (
   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
   story_id TEXT NOT NULL REFERENCES transformation_stories(id) ON DELETE CASCADE,
   type TEXT NOT NULL CHECK (type IN ('image', 'video')),
-  media_category TEXT NOT NULL CHECK (media_category IN ('before', 'after', 'during', 'video_testimonial')),
+  media_category TEXT NOT NULL CHECK (media_category IN ('before', 'after', 'before_after', 'during', 'video_testimonial')),
   url TEXT NOT NULL,
   title TEXT,
   description TEXT,
@@ -87,7 +87,10 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
--- 9. Criar triggers para updated_at
+-- 9. Criar triggers para updated_at (com proteção contra duplicação)
+DROP TRIGGER IF EXISTS update_transformation_stories_updated_at ON transformation_stories;
+DROP TRIGGER IF EXISTS update_transformation_media_updated_at ON transformation_media;
+
 CREATE TRIGGER update_transformation_stories_updated_at 
   BEFORE UPDATE ON transformation_stories
   FOR EACH ROW EXECUTE FUNCTION update_transformation_updated_at_column();
@@ -137,6 +140,6 @@ COMMENT ON TABLE transformation_stories IS 'Histórias de transformação dos al
 COMMENT ON TABLE transformation_media IS 'Fotos e vídeos das histórias de transformação (antes/depois/testemunhos)';
 COMMENT ON COLUMN transformation_stories.featured IS 'Marca histórias para destaque na página principal';
 COMMENT ON COLUMN transformation_stories.transformation_period IS 'Tempo que levou para a transformação (ex: "6 meses")';
-COMMENT ON COLUMN transformation_media.media_category IS 'Categoria da mídia: before, after, during, video_testimonial';
+COMMENT ON COLUMN transformation_media.media_category IS 'Categoria da mídia: before, after, before_after, during, video_testimonial';
 
 -- Fim do script SQL

@@ -70,7 +70,7 @@ export interface TransformationMedia {
   id: string
   story_id: string
   type: 'image' | 'video'
-  media_category: 'before' | 'after' | 'during' | 'video_testimonial'
+  media_category: 'before' | 'after' | 'before_after' | 'during' | 'video_testimonial'
   url: string
   title?: string
   description?: string
@@ -234,7 +234,7 @@ export class SupabaseService {
   }
 
   // Transformation Media operations
-  static async getTransformationMedia(storyId?: string, category?: 'before' | 'after' | 'during' | 'video_testimonial') {
+  static async getTransformationMedia(storyId?: string, category?: 'before' | 'after' | 'before_after' | 'during' | 'video_testimonial') {
     let query = supabase.from('transformation_media').select('*')
     
     if (storyId) {
