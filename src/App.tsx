@@ -11,6 +11,7 @@ import { AdminPanel } from './components/AdminPanel'
 import { AdminLogin } from './components/AdminLogin'
 import { Toaster } from '@/components/ui/sonner'
 import { usePersistentStorage } from './lib/storage'
+import { useAdminAuth } from './hooks/use-admin-auth'
 import { SupabaseService } from './lib/supabase'
 import whatsappIcon from './assets/whatsapp.png'
 
@@ -68,7 +69,9 @@ function App() {
   
   const [currentView, setCurrentView] = useState<'home' | 'admin' | 'transformations'>(getInitialView())
   const [selectedModalityId, setSelectedModalityId] = useState<string | null>(null)
-  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false)
+  
+  // Use persistent admin authentication
+  const { isAuthenticated: isAdminAuthenticated, isLoading: isAuthLoading, login: adminLogin, logout: adminLogout } = useAdminAuth()
   
   // Use persistent storage
   const { data, loadData, saveData, isLoading } = usePersistentStorage()
@@ -171,8 +174,19 @@ function App() {
   }
 
   if (currentView === 'admin') {
+    // Show loading while checking authentication
+    if (isAuthLoading) {
+      return (
+        <div className="min-h-screen bg-background flex items-center justify-center">
+          <div className="text-center">
+            <p className="text-muted-foreground">Verificando autenticação...</p>
+          </div>
+        </div>
+      )
+    }
+    
     if (!isAdminAuthenticated) {
-      return <AdminLogin onLogin={() => setIsAdminAuthenticated(true)} />
+      return <AdminLogin onLogin={adminLogin} />
     }
     
     return (
@@ -180,8 +194,9 @@ function App() {
         <AdminPanel 
           onBack={() => {
             setCurrentView('home')
-            setIsAdminAuthenticated(false) // Logout when going back
+            // Não fazer logout automático ao voltar - manter sessão ativa
           }}
+          onLogout={adminLogout} // Adicionar botão de logout manual
           modalities={modalities || []}
           media={media || []}
           onAddMedia={handleAddMedia}

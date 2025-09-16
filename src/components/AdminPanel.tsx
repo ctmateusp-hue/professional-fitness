@@ -19,9 +19,10 @@ interface AdminPanelProps {
   onAddMedia: (media: MediaItem) => void
   onDeleteMedia: (id: string) => void
   onBack: () => void
+  onLogout?: () => void
 }
 
-export function AdminPanel({ modalities, media, onAddMedia, onDeleteMedia, onBack }: AdminPanelProps) {
+export function AdminPanel({ modalities, media, onAddMedia, onDeleteMedia, onBack, onLogout }: AdminPanelProps) {
   const [selectedModalityId, setSelectedModalityId] = useState('')
   const [mediaType, setMediaType] = useState<'image' | 'video'>('image')
   const [mediaUrl, setMediaUrl] = useState('')
@@ -192,10 +193,19 @@ export function AdminPanel({ modalities, media, onAddMedia, onDeleteMedia, onBac
               <FaArrowLeft size={16} className="mr-2" />
               Voltar ao Site
             </Button>
-            <Button variant="outline" onClick={() => onBack()} className="text-red-600 hover:text-red-700 hover:bg-red-50">
-              <FaSignOutAlt size={16} className="mr-2" />
-              Logout
-            </Button>
+            {onLogout && (
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  onLogout()
+                  onBack()
+                }} 
+                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+              >
+                <FaSignOutAlt size={16} className="mr-2" />
+                Logout
+              </Button>
+            )}
           </div>
           <h1 className="text-4xl font-black text-foreground">
             Painel Administrativo

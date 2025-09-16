@@ -47,12 +47,6 @@ export function Gallery({ modality, media, onClose }: GalleryProps) {
         }))
         
         console.log('✅ Gallery loaded media for', modality.id, ':', converted)
-        console.log('🔍 Gallery Debug - Converted media sample:', converted.slice(0, 2))
-        console.log('🔍 Modal field mapping check:', {
-          originalSlug: mediaData[0]?.modality_slug,
-          convertedModalityId: converted[0]?.modalityId,
-          expectedModalityId: modality.id
-        })
         setSupabaseMedia(converted)
       } catch (error) {
         console.warn('Error loading media from Supabase:', error)
