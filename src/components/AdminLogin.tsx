@@ -21,27 +21,55 @@ export function AdminLogin({ onLogin }: AdminLoginProps) {
 
   // Get stored credentials
   const getStoredCredentials = () => {
-    const stored = localStorage.getItem('admin-credentials')
-    if (stored) {
-      return JSON.parse(stored)
+    console.log('getStoredCredentials called')
+    try {
+      const stored = localStorage.getItem('admin-credentials')
+      console.log('stored in localStorage:', stored)
+      if (stored) {
+        const parsed = JSON.parse(stored)
+        console.log('parsed credentials:', parsed)
+        return parsed
+      }
+      // Default credentials for first access
+      const defaultCreds = { username: 'admin', password: 'Mateus##12', isFirstAccess: true }
+      console.log('using default credentials:', defaultCreds)
+      return defaultCreds
+    } catch (error) {
+      console.error('Error getting stored credentials:', error)
+      const defaultCreds = { username: 'admin', password: 'Mateus##12', isFirstAccess: true }
+      console.log('fallback to default credentials:', defaultCreds)
+      return defaultCreds
     }
-    // Default credentials for first access
-    return { username: 'admin', password: 'Mateus##12', isFirstAccess: true }
   }
 
   const handleLogin = () => {
-    const storedCreds = getStoredCredentials()
+    console.log('handleLogin called')
+    console.log('credentials:', credentials)
     
-    if (credentials.username === storedCreds.username && credentials.password === storedCreds.password) {
-      if (storedCreds.isFirstAccess) {
-        setIsChangingPassword(true)
-        toast.info('Por segurança, defina uma nova senha no primeiro acesso')
+    try {
+      const storedCreds = getStoredCredentials()
+      console.log('storedCreds:', storedCreds)
+      
+      if (credentials.username === storedCreds.username && credentials.password === storedCreds.password) {
+        console.log('Credentials match!')
+        if (storedCreds.isFirstAccess) {
+          console.log('First access - requesting password change')
+          setIsChangingPassword(true)
+          toast.info('Por segurança, defina uma nova senha no primeiro acesso')
+        } else {
+          console.log('Calling onLogin()')
+          onLogin()
+          toast.success('Login realizado com sucesso!')
+        }
       } else {
-        onLogin()
-        toast.success('Login realizado com sucesso!')
+        console.log('Credentials do not match')
+        console.log('Expected username:', storedCreds.username, 'Got:', credentials.username)
+        console.log('Expected password:', storedCreds.password, 'Got:', credentials.password)
+        toast.error('Usuário ou senha incorretos!')
       }
-    } else {
-      toast.error('Usuário ou senha incorretos!')
+    } catch (error) {
+      console.error('Error in handleLogin:', error)
+      toast.error('Erro ao fazer login. Verifique o console.')
     }
   }
 
@@ -201,7 +229,10 @@ export function AdminLogin({ onLogin }: AdminLoginProps) {
           </div>
 
           <Button
-            onClick={handleLogin}
+            onClick={() => {
+              console.log('Login button clicked')
+              handleLogin()
+            }}
             className="w-full"
             disabled={!credentials.username || !credentials.password}
           >
