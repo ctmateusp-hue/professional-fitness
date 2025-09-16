@@ -197,9 +197,27 @@ export function TransformationStoriesManager() {
   }
 
   const handleAddMedia = async () => {
-    if (!selectedStory || !mediaData.url) return
+    if (!selectedStory) {
+      toast.error('Selecione uma história primeiro')
+      return
+    }
+    
+    if (!mediaData.url) {
+      toast.error('Adicione uma URL ou faça upload de um arquivo')
+      return
+    }
+    
+    if (!mediaData.title.trim()) {
+      toast.error('Digite um título para a mídia')
+      return
+    }
     
     try {
+      console.log('📤 Tentando adicionar mídia:', {
+        story_id: selectedStory,
+        ...mediaData
+      })
+      
       await SupabaseService.createTransformationMedia({
         story_id: selectedStory,
         ...mediaData
@@ -208,7 +226,15 @@ export function TransformationStoriesManager() {
       loadStoryMedia(selectedStory)
       resetMediaForm()
     } catch (error) {
-      toast.error('Erro ao adicionar mídia')
+      console.error('❌ Erro ao adicionar mídia:', error)
+      
+      // Log detalhado do erro
+      if (error instanceof Error) {
+        console.error('Error message:', error.message)
+        toast.error(`Erro ao adicionar mídia: ${error.message}`)
+      } else {
+        toast.error('Erro desconhecido ao adicionar mídia')
+      }
     }
   }
 
