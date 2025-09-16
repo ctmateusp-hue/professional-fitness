@@ -6,12 +6,12 @@ export function Footer() {
           © {new Date().getFullYear()} CT MATEUS PAVANELLO — Todos os direitos reservados
         </p>
         <a
-          href="https://cmvsystem.com"
+          href="https://crmvsystem.com"
           target="_blank"
           rel="noreferrer"
           className="text-sm text-zinc-400 hover:text-zinc-200 transition-colors"
         >
-          Site desenvolvido por cmvsystem.com
+          Site desenvolvido por crmvsystem.com
         </a>
       </div>
     </footer>

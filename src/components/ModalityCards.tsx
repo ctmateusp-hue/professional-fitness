@@ -22,6 +22,12 @@ const modalityColors = {
 }
 
 export function ModalityCards({ modalities, onModalityClick, media = [] }: ModalityCardsProps) {
+  // Debug logs
+  console.log('📊 ModalityCards Debug:')
+  console.log('- Modalities:', modalities?.length || 0)
+  console.log('- Media items:', media?.length || 0)
+  console.log('- Media sample:', media?.slice(0, 2))
+  
   return (
     <section id="modalidades" className="py-20 bg-muted/30">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -40,6 +46,14 @@ export function ModalityCards({ modalities, onModalityClick, media = [] }: Modal
             const IconComponent = modalityIcons[modality.id as keyof typeof modalityIcons] || FaBolt
             const colorClass = modalityColors[modality.id as keyof typeof modalityColors] || modalityColors.functional
             const modalityMediaCount = media.filter(m => m.modalityId === modality.id).length
+            
+            // Debug específico para contagem
+            console.log(`🔍 Modality "${modality.title}":`, {
+              modalityId: modality.id,
+              totalMedia: media.length,
+              filtered: media.filter(m => m.modalityId === modality.id),
+              count: modalityMediaCount
+            })
             
             return (
               <Card 
