@@ -382,18 +382,24 @@ export function Gallery({ modality, media, onClose }: GalleryProps) {
                     controls
                     className="w-full h-full rounded-lg"
                     poster={selectedMedia.thumbnail}
-                    autoPlay
+                    preload="metadata"
+                    playsInline
+                    webkit-playsinline="true"
+                    x-webkit-airplay="allow"
                   >
                     <source src={selectedMedia.url} type="video/mp4" />
-                    Seu navegador não suporta vídeo.
+                    <source src={selectedMedia.url} type="video/webm" />
+                    <source src={selectedMedia.url} type="video/ogg" />
+                    Seu navegador não suporta a reprodução de vídeo.
                   </video>
                 ) : (
                   <iframe
                     src={getVideoEmbedUrl(selectedMedia.url)}
                     className="w-full h-full rounded-lg"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
                     allowFullScreen
                     title={selectedMedia.title}
+                    loading="lazy"
                   />
                 )}
               </div>

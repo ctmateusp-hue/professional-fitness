@@ -1,10 +1,13 @@
-// Auto-update system for cache busting
+// Auto-update system for cache busting - DISABLED to prevent constant refreshes
 const CURRENT_VERSION = import.meta.env.VITE_APP_VERSION ?? 'dev'
 
 let updateCheckInProgress = false
 let lastCheckedVersion = ''
 
 async function checkForUpdate() {
+  // DISABLED - Auto-update system disabled to prevent constant page refreshes
+  return
+  
   // Only check if not in dev mode and not already checking
   if (import.meta.env.DEV || updateCheckInProgress) return
   updateCheckInProgress = true
@@ -37,12 +40,16 @@ async function checkForUpdate() {
   }
 }
 
-// Check every 5 minutes instead of 2 (less aggressive)
-setInterval(checkForUpdate, 300000)
+// DISABLED - Auto-update checks disabled
+// setInterval(checkForUpdate, 300000)
 
+// DISABLED - Focus checks disabled  
 // Check when window gets focus (but only if hidden for more than 1 minute)
 let lastFocusTime = Date.now()
 window.addEventListener('focus', () => {
+  // DISABLED - Auto-update on focus disabled
+  return
+  
   const now = Date.now()
   if (now - lastFocusTime > 60000) { // Only if was away for more than 1 minute
     setTimeout(checkForUpdate, 2000) // Wait 2 seconds after focus
