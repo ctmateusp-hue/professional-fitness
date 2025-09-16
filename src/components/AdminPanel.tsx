@@ -315,10 +315,23 @@ export function AdminPanel({ modalities, media, onAddMedia, onDeleteMedia, onBac
                     </TabsContent>
                   </Tabs>
 
-                  <Button onClick={handleAddMedia} className="w-full" disabled={!selectedModalityId || !mediaUrl || !mediaTitle}>
+                  <Button 
+                    onClick={handleAddMedia} 
+                    className="w-full" 
+                    disabled={!selectedModalityId || !mediaUrl || !mediaTitle}
+                  >
                     <FaPlus size={16} className="mr-2" />
                     Adicionar Mídia
                   </Button>
+                  
+                  {/* Debug info */}
+                  <div className="text-xs text-muted-foreground space-y-1 p-2 bg-muted rounded">
+                    <p>Debug - Valores necessários:</p>
+                    <p>• Modalidade: {selectedModalityId || 'VAZIO'}</p>
+                    <p>• URL: {mediaUrl ? 'DEFINIDA' : 'VAZIA'}</p>
+                    <p>• Título: {mediaTitle || 'VAZIO'}</p>
+                    <p>• Botão habilitado: {(!selectedModalityId || !mediaUrl || !mediaTitle) ? 'NÃO' : 'SIM'}</p>
+                  </div>
                 </CardContent>
               </Card>
 
