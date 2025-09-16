@@ -39,24 +39,26 @@
       ]
     }
   ],
-  "routes": [
+  "redirects": [
     {
-      "src": "/admin",
-      "status": 302,
-      "headers": { "Location": "/#/admin" }
+      "source": "/admin",
+      "destination": "/#/admin",
+      "permanent": false
     },
     {
-      "src": "/transformations", 
-      "status": 302,
-      "headers": { "Location": "/#/transformations" }
+      "source": "/transformations", 
+      "destination": "/#/transformations",
+      "permanent": false
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/assets/(.*)",
+      "destination": "/assets/$1"
     },
     {
-      "src": "/assets/(.*)",
-      "dest": "/assets/$1"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ]
 }
