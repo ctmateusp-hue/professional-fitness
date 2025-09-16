@@ -1,6 +1,7 @@
 // Simple persistent storage service for media data
 import { useState, useEffect } from 'react'
 import { MediaItem, Modality } from '../App'
+import { SupabaseService } from './supabase'
 
 // Default data structure
 const defaultData = {
@@ -24,35 +25,65 @@ const defaultData = {
   ] as Modality[]
 }
 
+// Convert Supabase format to App format
+function convertSupabaseToAppFormat(supabaseMedia: any[]): MediaItem[] {
+  return supabaseMedia.map(item => ({
+    id: item.id,
+    modalityId: item.modality_slug, // Convert slug back to modalityId
+    type: item.type,
+    url: item.url,
+    title: item.title,
+    description: item.description || '',
+    category: item.category || 'regular'
+  }))
+}
+
 // Persistent storage with localStorage
 class PersistentStorage {
   
   async loadData(): Promise<{ media: MediaItem[], modalities: Modality[] }> {
     try {
-      console.log('📱 Loading data from localStorage (device-specific)')
+      console.log('� Loading data from Supabase...')
       
-      // Load from localStorage (device-specific)
-      const globalData = localStorage.getItem('professional-fitness-global-data')
-      if (globalData) {
-        const parsed = JSON.parse(globalData)
-        console.log('📂 Data loaded from this device:', parsed)
-        return {
-          media: parsed.media || [],
-          modalities: parsed.modalities || defaultData.modalities
+      // First, try to load from Supabase
+      try {
+        const supabaseMedia = await SupabaseService.getMedia()
+        const convertedMedia = convertSupabaseToAppFormat(supabaseMedia)
+        
+        console.log('✅ Data loaded from Supabase:', convertedMedia)
+        
+        const result = {
+          media: convertedMedia,
+          modalities: defaultData.modalities
+        }
+        
+        // Cache in localStorage for offline access
+        localStorage.setItem('professional-fitness-global-data', JSON.stringify(result))
+        localStorage.setItem('fitness-media', JSON.stringify(convertedMedia))
+        
+        return result
+        
+      } catch (supabaseError) {
+        console.warn('⚠️ Supabase unavailable, trying localStorage...', supabaseError)
+        
+        // Fallback to localStorage
+        const globalData = localStorage.getItem('professional-fitness-global-data')
+        if (globalData) {
+          const parsed = JSON.parse(globalData)
+          console.log('📂 Data loaded from localStorage fallback:', parsed)
+          return {
+            media: parsed.media || [],
+            modalities: parsed.modalities || defaultData.modalities
+          }
         }
       }
       
-      // Initialize with default data
-      const initialData = {
-        media: [],
-        modalities: defaultData.modalities
-      }
-      
-      await this.saveData(initialData)
-      return initialData
+      // If both fail, use defaults
+      console.log('📂 Using default data (no Supabase or localStorage)')
+      return defaultData
       
     } catch (error) {
-      console.warn('⚠️ Error with localStorage, using default data:', error)
+      console.warn('⚠️ Error loading data, using defaults:', error)
       return defaultData
     }
   }
