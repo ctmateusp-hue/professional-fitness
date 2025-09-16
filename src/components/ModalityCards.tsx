@@ -44,6 +44,7 @@ export function ModalityCards({ modalities, onModalityClick, media = [] }: Modal
             return (
               <Card 
                 key={modality.id} 
+                data-modality-id={modality.id}
                 className="group overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 h-full flex flex-col"
               >
                 <div className={`h-2 bg-gradient-to-r ${colorClass.replace('/20', '').replace('/5', '')}`}></div>
