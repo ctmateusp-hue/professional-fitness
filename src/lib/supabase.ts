@@ -51,6 +51,21 @@ export interface TransformationStory {
   updated_at?: string
 }
 
+// Tipos para leads
+export interface Lead {
+  id?: string
+  name: string
+  phone: string
+  email?: string
+  objective?: string
+  utm_source?: string
+  utm_medium?: string
+  utm_campaign?: string
+  status?: 'new' | 'contacted' | 'converted' | 'lost'
+  notes?: string
+  created_at?: string
+}
+
 export interface TransformationMedia {
   id: string
   story_id: string
@@ -265,5 +280,66 @@ export class SupabaseService {
       console.error('Error deleting transformation media:', error)
       throw error
     }
+  }
+
+  // Lead operations
+  static async createLead(lead: Omit<Lead, 'id' | 'created_at'>) {
+    console.log('🎯 Creating lead:', lead)
+    
+    const { data, error } = await supabase
+      .from('leads')
+      .insert([{
+        ...lead,
+        status: 'new' // Default status
+      }])
+      .select()
+      .single()
+    
+    if (error) {
+      console.error('❌ Error creating lead:', error)
+      throw error
+    }
+    
+    console.log('✅ Lead created successfully:', data)
+    return data
+  }
+
+  static async getLeads() {
+    console.log('📋 Fetching leads from Supabase...')
+    
+    const { data, error } = await supabase
+      .from('leads')
+      .select('*')
+      .order('created_at', { ascending: false })
+    
+    if (error) {
+      console.error('❌ Error fetching leads:', error)
+      throw error
+    }
+    
+    console.log('✅ Leads fetched:', data)
+    return data || []
+  }
+
+  static async updateLeadStatus(id: string, status: Lead['status'], notes?: string) {
+    console.log('📝 Updating lead status:', { id, status, notes })
+    
+    const updateData: any = { status }
+    if (notes) updateData.notes = notes
+    
+    const { data, error } = await supabase
+      .from('leads')
+      .update(updateData)
+      .eq('id', id)
+      .select()
+      .single()
+    
+    if (error) {
+      console.error('❌ Error updating lead:', error)
+      throw error
+    }
+    
+    console.log('✅ Lead updated:', data)
+    return data
   }
 }

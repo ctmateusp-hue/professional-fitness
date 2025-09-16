@@ -3,6 +3,7 @@ import App from './App'
 import "./main.css"
 import "./styles/theme.css"
 import "./index.css"
+import './lib/auto-update' // Auto-update system
 
 // Simple error boundary component
 function ErrorBoundary({ children }: { children: React.ReactNode }) {

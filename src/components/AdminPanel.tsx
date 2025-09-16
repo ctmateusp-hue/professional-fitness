@@ -32,7 +32,44 @@ export function AdminPanel({ modalities, media, onAddMedia, onDeleteMedia, onBac
 
   const handleFileUpload = async (file: File) => {
     try {
-      // Convert file to base64 for permanent storage
+      console.log('📁 File info:', { 
+        name: file.name, 
+        size: file.size, 
+        type: file.type,
+        sizeInMB: (file.size / (1024 * 1024)).toFixed(2) + ' MB'
+      })
+
+      // Check file size limits
+      const maxImageSize = 10 * 1024 * 1024 // 10MB for images
+      const maxVideoSize = 100 * 1024 * 1024 // 100MB for videos
+      
+      if (mediaType === 'image' && file.size > maxImageSize) {
+        toast.error('Imagem muito grande! Máximo 10MB permitido.')
+        return
+      }
+      
+      if (mediaType === 'video' && file.size > maxVideoSize) {
+        toast.error('Vídeo muito grande! Máximo 100MB permitido.')
+        return
+      }
+
+      // For videos, use URL instead of base64 to avoid timeout
+      if (mediaType === 'video') {
+        // Create a local URL for preview (temporary)
+        const videoUrl = URL.createObjectURL(file)
+        setMediaUrl(videoUrl)
+        
+        // Auto-fill title with filename if empty
+        if (!mediaTitle) {
+          setMediaTitle(file.name.replace(/\.[^/.]+$/, ""))
+        }
+        
+        toast.success(`Vídeo ${file.name} carregado com sucesso!`)
+        toast.info('⚠️ Para vídeos, recomendamos usar URL externa para melhor performance')
+        return
+      }
+
+      // For images, convert to base64
       const reader = new FileReader()
       reader.onload = (e) => {
         const base64Url = e.target?.result as string
@@ -43,12 +80,13 @@ export function AdminPanel({ modalities, media, onAddMedia, onDeleteMedia, onBac
           setMediaTitle(file.name.replace(/\.[^/.]+$/, ""))
         }
         
-        toast.success(`Arquivo ${file.name} carregado com sucesso!`)
+        toast.success(`Imagem ${file.name} carregada com sucesso!`)
       }
       reader.onerror = () => {
         toast.error('Erro ao carregar o arquivo')
       }
       reader.readAsDataURL(file)
+      
     } catch (error) {
       console.error('Error uploading file:', error)
       toast.error('Erro ao fazer upload do arquivo')
@@ -64,6 +102,11 @@ export function AdminPanel({ modalities, media, onAddMedia, onDeleteMedia, onBac
     try {
       console.log('🔄 Saving media to Supabase...')
       
+      // Show different loading messages for videos
+      if (mediaType === 'video') {
+        toast.info('⏳ Processando vídeo... Isso pode demorar um pouco.')
+      }
+      
       // Save to Supabase with corrected field names
       const mediaData = {
         modality_slug: selectedModalityId, // Use slug instead of id
@@ -76,7 +119,15 @@ export function AdminPanel({ modalities, media, onAddMedia, onDeleteMedia, onBac
 
       console.log('📊 Media data to save:', mediaData)
       
-      const savedMedia = await SupabaseService.addMedia(mediaData)
+      // Set timeout based on media type
+      const timeoutDuration = mediaType === 'video' ? 120000 : 30000 // 2min for video, 30s for image
+      
+      const savedMedia = await Promise.race([
+        SupabaseService.addMedia(mediaData),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Timeout: Operação demorou muito')), timeoutDuration)
+        )
+      ]) as any
       
       console.log('✅ Media saved to Supabase:', savedMedia)
       
@@ -100,9 +151,14 @@ export function AdminPanel({ modalities, media, onAddMedia, onDeleteMedia, onBac
       setSelectedModalityId('')
       
       toast.success('✅ Mídia salva permanentemente no Supabase! Agora é visível para todos.')
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Error saving media:', error)
-      toast.error(`Erro ao salvar mídia: ${error.message || 'Tente novamente.'}`)
+      
+      if (error.message?.includes('Timeout')) {
+        toast.error('Timeout: Arquivo muito grande ou conexão lenta. Tente usar URL externa para vídeos.')
+      } else {
+        toast.error(`Erro ao salvar mídia: ${error.message || 'Tente novamente.'}`)
+      }
     }
   }
 
@@ -307,10 +363,20 @@ export function AdminPanel({ modalities, media, onAddMedia, onDeleteMedia, onBac
                         </div>
                         <p className="text-xs text-muted-foreground">
                           {mediaType === 'image' 
-                            ? "Formatos suportados: JPG, PNG, WebP (máx. 10MB)"
-                            : "Formatos suportados: MP4, WebM, MOV (máx. 50MB)"
+                            ? "Formatos: JPG, PNG, WebP (máx. 10MB)"
+                            : "Formatos: MP4, WebM, MOV (máx. 100MB)"
                           }
                         </p>
+                        {mediaType === 'video' && (
+                          <div className="text-xs bg-blue-50 border border-blue-200 p-2 rounded">
+                            <p className="font-medium text-blue-800">💡 Dica para vídeos:</p>
+                            <p className="text-blue-700">Para melhor performance, recomendamos:</p>
+                            <ul className="list-disc list-inside text-blue-700 ml-2">
+                              <li>Usar URL externa (YouTube, Vimeo, etc.)</li>
+                              <li>Ou upload de vídeos pequenos (&lt;50MB)</li>
+                            </ul>
+                          </div>
+                        )}
                       </div>
                     </TabsContent>
                   </Tabs>
