@@ -34,9 +34,10 @@ export function Gallery({ modality, media, onClose }: GalleryProps) {
         
         if (!isMounted) return
 
+        // Convert Supabase format to App format
         const converted = mediaData.map(item => ({
           id: item.id,
-          modalityId: item.modality_id,
+          modalityId: item.modality_slug, // Convert slug back to modalityId for compatibility
           type: item.type,
           url: item.url,
           title: item.title,
@@ -45,6 +46,7 @@ export function Gallery({ modality, media, onClose }: GalleryProps) {
           thumbnail: item.thumbnail
         }))
         
+        console.log('✅ Gallery loaded media for', modality.id, ':', converted)
         setSupabaseMedia(converted)
       } catch (error) {
         console.warn('Error loading media from Supabase:', error)

@@ -31,9 +31,10 @@ export function Transformations({ transformations, onClose }: TransformationsPro
         
         if (!isMounted) return
 
+        // Convert Supabase format to App format
         const converted = media.map(item => ({
           id: item.id,
-          modalityId: item.modality_id,
+          modalityId: item.modality_slug, // Convert slug back to modalityId for compatibility
           type: item.type,
           url: item.url,
           title: item.title,
@@ -42,6 +43,7 @@ export function Transformations({ transformations, onClose }: TransformationsPro
           thumbnail: item.thumbnail
         }))
         
+        console.log('✅ Transformations loaded:', converted)
         setSupabaseTransformations(converted)
       } catch (error) {
         console.warn('Error loading transformations from Supabase:', error)

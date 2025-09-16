@@ -13,10 +13,10 @@ console.log('Supabase config:', {
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
-// Database types
+// Database types - Updated for proper Supabase schema
 export interface MediaItem {
-  id: string
-  modality_id: string
+  id: string // UUID from Supabase
+  modality_slug: string // Reference to modality slug
   type: 'image' | 'video'
   url: string
   title: string
@@ -28,7 +28,8 @@ export interface MediaItem {
 }
 
 export interface Modality {
-  id: string
+  id: string // UUID from Supabase
+  slug: string // Text slug for referencing
   title: string
   description: string
   created_at?: string
@@ -66,12 +67,12 @@ export interface TransformationMedia {
 
 // Utility functions for database operations
 export class SupabaseService {
-  // Media operations
-  static async getMedia(modalityId?: string, category?: 'regular' | 'transformation') {
+  // Media operations - Updated for new schema
+  static async getMedia(modalitySlug?: string, category?: 'regular' | 'transformation') {
     let query = supabase.from('media').select('*')
     
-    if (modalityId) {
-      query = query.eq('modality_id', modalityId)
+    if (modalitySlug) {
+      query = query.eq('modality_slug', modalitySlug)
     }
     
     if (category) {
@@ -82,13 +83,17 @@ export class SupabaseService {
     
     if (error) {
       console.error('❌ Error fetching media from Supabase:', error)
+      console.error('Query details:', { modalitySlug, category })
       throw error
     }
     
+    console.log('✅ Media fetched from Supabase:', data)
     return data || []
   }
 
   static async addMedia(media: Omit<MediaItem, 'id' | 'created_at' | 'updated_at'>) {
+    console.log('🔄 Attempting to save media to Supabase:', media)
+    
     const { data, error } = await supabase
       .from('media')
       .insert([media])
@@ -96,26 +101,32 @@ export class SupabaseService {
       .single()
     
     if (error) {
-      console.error('Error adding media:', error)
+      console.error('❌ Error adding media to Supabase:', error)
+      console.error('Media data:', media)
       throw error
     }
     
+    console.log('✅ Media saved successfully to Supabase:', data)
     return data
   }
 
   static async deleteMedia(id: string) {
+    console.log('🗑️ Deleting media from Supabase:', id)
+    
     const { error } = await supabase
       .from('media')
       .delete()
       .eq('id', id)
     
     if (error) {
-      console.error('Error deleting media:', error)
+      console.error('❌ Error deleting media from Supabase:', error)
       throw error
     }
+    
+    console.log('✅ Media deleted successfully from Supabase')
   }
 
-  // Modality operations
+  // Modality operations - Updated for new schema  
   static async getModalities() {
     const { data, error } = await supabase
       .from('modalities')
@@ -127,6 +138,7 @@ export class SupabaseService {
       throw error
     }
     
+    console.log('✅ Modalities fetched from Supabase:', data)
     return data || []
   }
 

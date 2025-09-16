@@ -62,9 +62,11 @@ export function AdminPanel({ modalities, media, onAddMedia, onDeleteMedia, onBac
     }
 
     try {
-      // Save to Supabase
+      console.log('🔄 Saving media to Supabase...')
+      
+      // Save to Supabase with corrected field names
       const mediaData = {
-        modality_id: selectedModalityId,
+        modality_slug: selectedModalityId, // Use slug instead of id
         type: mediaType,
         url: mediaUrl,
         title: mediaTitle,
@@ -72,12 +74,16 @@ export function AdminPanel({ modalities, media, onAddMedia, onDeleteMedia, onBac
         category: 'regular' as const
       }
 
+      console.log('📊 Media data to save:', mediaData)
+      
       const savedMedia = await SupabaseService.addMedia(mediaData)
       
-      // Also save to local storage for compatibility
+      console.log('✅ Media saved to Supabase:', savedMedia)
+      
+      // Also save to local storage for compatibility (with converted format)
       const newMedia: MediaItem = {
         id: savedMedia.id,
-        modalityId: selectedModalityId,
+        modalityId: selectedModalityId, // Keep old format for local compatibility
         type: mediaType,
         url: mediaUrl,
         title: mediaTitle,
@@ -93,10 +99,10 @@ export function AdminPanel({ modalities, media, onAddMedia, onDeleteMedia, onBac
       setMediaDescription('')
       setSelectedModalityId('')
       
-      toast.success('Mídia salva permanentemente! Agora é visível para todos.')
+      toast.success('✅ Mídia salva permanentemente no Supabase! Agora é visível para todos.')
     } catch (error) {
-      console.error('Error saving media:', error)
-      toast.error('Erro ao salvar mídia. Tente novamente.')
+      console.error('❌ Error saving media:', error)
+      toast.error(`Erro ao salvar mídia: ${error.message || 'Tente novamente.'}`)
     }
   }
 
